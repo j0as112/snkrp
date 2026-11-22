@@ -21,8 +21,12 @@ Version HTML: lo primero que se ve al conectar (Nuevo soldado / Continuar / Comu
 - `cl_personaje.lua` queda para el fondo del contenedor y el estilo de `ixMenuButton`.
 
 ## Menu del tabulador (`cl_menu_tab.lua` + skin)
-Inventario, personaje, ajustes... Se mantiene la estructura de Helix (`ixMenu`: pestanas a la izquierda, paneles a la derecha) para no romper el inventario, y solo cambia el aspecto, con el mismo lenguaje que el menu de bienvenida: fuente fina (`aotMenuBoton`) en todos los botones de menu, pestanas de texto con un velo sutil y barra dorada a la izquierda, fondo con degradado oscuro desde la izquierda (`PaintMenuBackground` del skin) y la marca "SNK RP" arriba. Naruto sustituye el panel entero por un DHTML con pestanas arriba y pergamino; aqui se descarto por riesgo (el inventario es critico) y porque los paneles internos de Helix estan pensados para su layout.
-- `ix.aotUI.TextoEspaciado` (en `cl_tema.lua`) dibuja texto con espaciado entre letras; lo usan el menu de bienvenida y el del tabulador.
+Inventario, personaje, ajustes, ayuda... Como el de Naruto: **barra de pestanas arriba** (centradas, texto fino con espaciado y barra dorada animada) y **panel a pantalla completa** debajo; "SNK RP" a la izquierda y "PERSONAJES" / "VOLVER" a la derecha. Por debajo se conserva el **motor de Helix** (`ixMenu`): crea las pestanas, los paneles, la vista 3D de la pestana de personaje y el inventario; el plugin solo rehace el layout (se oculta la columna izquierda, `GetStandardSubpanelSize` pasa a ocupar la pantalla bajo la barra y `Recolocar` recoloca los paneles ya creados) y el aspecto.
+- Cada pestana de la barra **dispara el boton original de Helix** (`origen:OnMousePressed`), asi que el estado de seleccion, `TransitionSubpanel` y `ix.gui.lastMenuTab` siguen funcionando.
+- **Fila secundaria** bajo la barra: si la pestana activa tiene secciones (p. ej. los temas de Ayuda) se muestran ahi, tomando los botones de su `sectionPanel`.
+- Fondo (`PaintMenuBackground` del skin): desenfoque + velo oscuro con ligero degradado verde.
+- `ix.aotUI.TextoEspaciado` (en `cl_tema.lua`) dibuja texto con espaciado entre letras.
+- **Gotchas:** la altura reservada arriba es `ALTO_BARRA + ALTO_SUB` (ScreenScale); si se anade una pestana con muchas secciones habria que revisar el ancho de la fila secundaria.
 
 ## Seleccion de personaje con escena 3D (`cl_seleccion.lua`, `sv_seleccion.lua`)
 Sustituye a `ixCharMenuLoad` de Helix siguiendo la seleccion de Naruto: los personajes de la cuenta salen de pie delante de una camara, 3 por pagina; el raton resalta, clic elige, la X del rotulo borra (con confirmacion) y las flechas pasan de pagina.
