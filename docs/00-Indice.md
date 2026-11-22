@@ -2,6 +2,7 @@
 
 - [[titanes]] — titanes: animacion, movimiento, ataques, colision y trampas.
 - [[modelos]] — modelos de jugador por facción (Workshop SNK Modelos).
+- [[armas]] — 3DMG: equipo visible, gas.
 - [[interfaz]] — tema AoT de Helix, skin, pantalla de carga.
 - [[changelog]] — registro de cambios para jugadores.
 

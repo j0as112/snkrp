@@ -708,23 +708,22 @@ if (CLIENT) then
 		end
 	end
 
-	function SWEP:DrawWorldModel()
-		local owner = self:GetOwner()
-
-		if (!IsValid(owner)) then
-			self:DrawModel()
-			return
-		end
+	-- Dibuja el equipo pegado a los huesos del portador. La cintura (gas, cables, vainas) se ve siempre que
+	-- lleve el equipo; las espadas, solo cuando lo tiene en la mano. Lo llama el hook PostPlayerDraw de abajo,
+	-- porque DrawWorldModel solo se ejecuta para el arma ACTIVA y con otra cosa en la mano no se veria nada.
+	function SWEP:DibujarEquipo(owner)
+		if (!IsValid(owner) or !owner:Alive()) then return end
 
 		if (!self.AOT_Modelos) then self:CrearModelos() end
 
 		local rotas = self:GetFilo() <= 0
+		local enMano = owner:GetActiveWeapon() == self
 
 		for nombre, v in pairs(self.WElements) do
 			local m = self.AOT_Modelos[nombre]
 			local hueso = owner:LookupBone(v.bone)
 
-			if (IsValid(m) and hueso and !(v.hoja and rotas)) then
+			if (IsValid(m) and hueso and !(v.hoja and (rotas or !enMano))) then
 				local matriz = owner:GetBoneMatrix(hueso)
 
 				if (matriz) then
@@ -742,6 +741,23 @@ if (CLIENT) then
 			end
 		end
 	end
+
+	function SWEP:DrawWorldModel()
+		local owner = self:GetOwner()
+
+		-- Suelto en el suelo: el modelo normal. En manos de alguien lo dibuja PostPlayerDraw.
+		if (!IsValid(owner)) then
+			self:DrawModel()
+		end
+	end
+
+	hook.Add("PostPlayerDraw", "AOT_Equipo3DMG", function(jugador)
+		local arma = jugador:GetWeapon("aot_odm")
+
+		if (IsValid(arma) and arma.DibujarEquipo) then
+			arma:DibujarEquipo(jugador)
+		end
+	end)
 
 	function SWEP:OnRemove()
 		for _, m in pairs(self.AOT_Modelos or {}) do
