@@ -316,48 +316,61 @@ function PANEL:Paint(ancho, alto)
 		UI.FondoEstudio(ancho, alto)
 	end
 
-	surface.SetDrawColor(0, 0, 0, 150)
-	surface.SetTexture(surface.GetTextureID("vgui/gradient-d"))
-	surface.DrawTexturedRect(0, 0, ancho, alto * 0.2)
+	-- El panel ocupa toda la franja negra de la izquierda (de arriba abajo) y se funde con la imagen.
+	local pw = ancho * 0.40
+	local solido = pw * 0.82
 
-	local px, pw = ancho * 0.07, math.max(ancho * 0.32, 380)
+	surface.SetDrawColor(6, 9, 8, 245)
+	surface.DrawRect(0, 0, solido, alto)
+
+	surface.SetDrawColor(6, 9, 8, 245)
+	surface.SetTexture(surface.GetTextureID("vgui/gradient-l"))
+	surface.DrawTexturedRect(solido, 0, pw - solido, alto)
+
+	-- filete dorado vertical en el borde de la franja
+	surface.SetDrawColor(UI.oro.r, UI.oro.g, UI.oro.b, 110)
+	surface.DrawRect(solido - 2, alto * 0.08, 2, alto * 0.84)
+
+	local cx = solido / 2
 	local lista = self:Botones()
-	local bh, gap = ScreenScale(17), ScreenScale(4)
-	local cabecera = ScreenScale(104)
-	local ph = cabecera + #lista * (bh + gap) + ScreenScale(22)
-	local py = (alto - ph) / 2
+	local bh, gap = ScreenScale(19), ScreenScale(5)
+	local bw = solido * 0.78
+	local ls = ScreenScale(58)
 
-	surface.SetDrawColor(14, 21, 17, 190)
-	surface.DrawRect(px, py, pw, ph)
-	surface.SetDrawColor(UI.oro.r, UI.oro.g, UI.oro.b, 90)
-	surface.DrawOutlinedRect(px, py, pw, ph)
-	UI.Marco(px, py, pw, ph, UI.oro, 20)
+	-- bloque centrado en vertical: logo, titulo, lema, filete y botones
+	local altoBloque = ls + ScreenScale(46) + ScreenScale(22) + #lista * (bh + gap)
+	local y = (alto - altoBloque) / 2
 
 	local logo = UI.Logo()
-	local ls = ScreenScale(44)
 
 	if (logo) then
 		surface.SetDrawColor(255, 255, 255, 255)
 		surface.SetMaterial(logo)
-		surface.DrawTexturedRect(px + pw / 2 - ls / 2, py + ScreenScale(8), ls, ls)
+		surface.DrawTexturedRect(cx - ls / 2, y, ls, ls)
 		surface.SetDrawColor(UI.oro.r, UI.oro.g, UI.oro.b, 200)
-		surface.DrawOutlinedRect(px + pw / 2 - ls / 2, py + ScreenScale(8), ls, ls, 2)
+		surface.DrawOutlinedRect(cx - ls / 2, y, ls, ls, 2)
 	end
 
-	draw.SimpleText("SNK RP", "aotTitulo", px + pw / 2, py + ScreenScale(66), UI.pergamino, TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
-	draw.SimpleText("Shinzou wo Sasageyo", "aotSubtitulo", px + pw / 2, py + ScreenScale(88), UI.acero, TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
+	y = y + ls + ScreenScale(16)
+	draw.SimpleText("SNK RP", "aotTitulo", cx, y, UI.pergamino, TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
 
-	surface.SetDrawColor(UI.oro.r, UI.oro.g, UI.oro.b, 160)
-	surface.DrawRect(px + ScreenScale(12), py + cabecera - ScreenScale(6), pw - ScreenScale(24), 2)
+	y = y + ScreenScale(20)
+	draw.SimpleText("Shinzou wo Sasageyo", "aotSubtitulo", cx, y, UI.acero, TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
+
+	y = y + ScreenScale(16)
+	surface.SetDrawColor(UI.oro.r, UI.oro.g, UI.oro.b, 170)
+	surface.DrawRect(cx - bw / 2, y, bw, 2)
+
+	y = y + ScreenScale(14)
 
 	local mx, my = self:CursorPos()
 	self.rectas = {}
 
 	for i, b in ipairs(lista) do
-		local bx, by, bw = px + ScreenScale(12), py + cabecera + (i - 1) * (bh + gap), pw - ScreenScale(24)
+		local bx, by = cx - bw / 2, y + (i - 1) * (bh + gap)
 		local encima = !b.apagado and mx >= bx and mx <= bx + bw and my >= by and my <= by + bh
 
-		surface.SetDrawColor(b.peligro and 120 or UI.verde.r, b.peligro and 25 or UI.verde.g, b.peligro and 25 or UI.verde.b, encima and 235 or 120)
+		surface.SetDrawColor(b.peligro and 120 or UI.verde.r, b.peligro and 25 or UI.verde.g, b.peligro and 25 or UI.verde.b, encima and 235 or 125)
 		surface.DrawRect(bx, by, bw, bh)
 
 		if (encima) then
@@ -370,7 +383,7 @@ function PANEL:Paint(ancho, alto)
 		self.rectas[#self.rectas + 1] = {x = bx, y = by, w = bw, h = bh, id = b.id, apagado = b.apagado}
 	end
 
-	draw.SimpleText("LOS MUROS - MARIA - ROSE - SINA", "ixMenuMiniFont", px + pw / 2, py + ph - ScreenScale(8), ColorAlpha(UI.acero, 140), TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
+	draw.SimpleText("LOS MUROS - MARIA - ROSE - SINA", "ixMenuMiniFont", cx, alto - ScreenScale(14), ColorAlpha(UI.acero, 130), TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
 end
 
 function PANEL:OnMousePressed(codigo)
