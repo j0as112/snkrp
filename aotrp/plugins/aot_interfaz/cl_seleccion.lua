@@ -35,7 +35,7 @@ end)
 hook.Add("CalcView", "aot_SeleccionEscena", function(client, origen, angulos, fov)
 	local panel = ix.aotUI.panelSeleccion
 
-	if (!IsValid(panel) or !panel:IsVisible() or !panel.modoMundo) then return end
+	if (!IsValid(panel) or !panel:IsVisible() or !panel.modoMundo or !ix.aotUI.escena) then return end
 
 	local cam = ix.aotUI.escena.cam
 
@@ -128,6 +128,17 @@ function PANEL:Init()
 	self.volver:SetText("return")
 	self.volver:SizeToContents()
 	self.volver:SetPos(padding, ScrH() - self.volver:GetTall() - padding)
+	-- Siempre hay una salida clara: "Continuar" elige el personaje resaltado (o el primero de la pagina).
+	self.continuar = self:Add("ixMenuButton")
+	self.continuar:SetText("choose")
+	self.continuar:SizeToContents()
+	self.continuar:SetPos(ScrW() - self.continuar:GetWide() - padding, ScrH() - self.continuar:GetTall() - padding)
+	self.continuar.DoClick = function()
+		local fig = self.hover or self.figuras[1]
+
+		if (fig) then self:Elegir(fig.id) end
+	end
+
 	self.volver.DoClick = function()
 		local menu = self:GetParent()
 
@@ -137,6 +148,19 @@ function PANEL:Init()
 			menu.mainPanel:Undim()
 		end
 	end
+end
+
+-- Salida de emergencia: Esc vuelve al menu.
+function PANEL:Think()
+	if (!self:IsVisible()) then return end
+
+	local esc = input.IsKeyDown(KEY_ESCAPE)
+
+	if (esc and !self.escAntes and IsValid(self.volver)) then
+		self.volver:DoClick()
+	end
+
+	self.escAntes = esc
 end
 
 function PANEL:OnRemove()
@@ -221,7 +245,8 @@ function PANEL:Reconstruir()
 end
 
 function PANEL:ActualizarModo()
-	local nuevo = ix.aotUI.escena != nil and self:IsVisible()
+	local esc = ix.aotUI.escena
+	local nuevo = esc != nil and !ix.aotUI.forzarEstudio and util.IsInWorld(esc.cam.pos) and self:IsVisible()
 	local cambio = (nuevo != (self.modoMundo or false))
 
 	self.modoMundo = nuevo
@@ -499,3 +524,13 @@ function PANEL:Rotulo(fig, resaltado)
 end
 
 vgui.Register("ixCharMenuLoad", PANEL, "ixCharMenuPanel")
+
+-- Consola del cliente: "aot_seleccion_modo estudio" fuerza el diorama de estudio (por si la camara del mapa se ve mal);
+-- "aot_seleccion_modo mundo" vuelve a la camara del mapa.
+concommand.Add("aot_seleccion_modo", function(_, _, args)
+	ix.aotUI.forzarEstudio = (args[1] == "estudio")
+
+	if (IsValid(ix.aotUI.panelSeleccion)) then
+		ix.aotUI.panelSeleccion:ActualizarModo()
+	end
+end)

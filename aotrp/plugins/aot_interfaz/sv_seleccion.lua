@@ -49,6 +49,21 @@ ix.command.Add("SeleccionCamara", {
 		bit.bor(ix.type.number, ix.type.optional)
 	},
 	OnRun = function(self, client, distancia, separacion, fov)
+		-- Debe estar dentro del mapa y con suelo debajo; si no, los personajes saldrian en el vacio.
+		if (!util.IsInWorld(client:EyePos())) then
+			return "No puedo fijar la camara: estas fuera del mapa. Colocate dentro y sobre el suelo."
+		end
+
+		local suelo = util.TraceLine({
+			start = client:GetPos(),
+			endpos = client:GetPos() - Vector(0, 0, 400),
+			mask = MASK_SOLID_BRUSHONLY
+		})
+
+		if (!suelo.Hit) then
+			return "No puedo fijar la camara: no hay suelo bajo tus pies. Colocate sobre el suelo (sin noclip)."
+		end
+
 		local esc = {
 			cam = {pos = client:EyePos(), ang = client:EyeAngles(), fov = math.Clamp(fov or 70, 30, 110)},
 			dist = math.Clamp(distancia or 190, 80, 600),
