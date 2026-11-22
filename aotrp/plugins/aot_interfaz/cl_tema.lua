@@ -135,3 +135,49 @@ function UI.Logo()
 end
 
 UI.Logo()
+
+-- Imagen de fondo del menu de bienvenida (publicada con la pantalla de carga). Se descarga una vez a data/.
+-- El numero del nombre del archivo es la version: si se cambia la imagen, se sube el numero para que los
+-- clientes descarguen la nueva.
+local FONDO_URL = "https://j0as112.github.io/snkrp/pantalla.jpg"
+local FONDO_ARCHIVO = "snkrp_pantalla_v1.jpg"
+
+function UI.Fondo()
+	if (UI.fondoMaterial) then return UI.fondoMaterial end
+
+	if (file.Exists(FONDO_ARCHIVO, "DATA")) then
+		UI.fondoMaterial = Material("data/" .. FONDO_ARCHIVO, "smooth")
+
+		if (UI.fondoMaterial and UI.fondoMaterial:IsError()) then UI.fondoMaterial = nil end
+
+		return UI.fondoMaterial
+	end
+
+	if (!UI.fondoPedido) then
+		UI.fondoPedido = true
+
+		http.Fetch(FONDO_URL, function(cuerpo, tamano, cabeceras, codigo)
+			if (codigo == 200 and tamano > 5000) then
+				file.Write(FONDO_ARCHIVO, cuerpo)
+			end
+		end, function() end)
+	end
+end
+
+-- Dibuja la imagen cubriendo toda la pantalla (16:9 recortada si hace falta). Devuelve false si aun no esta.
+function UI.DibujarFondoImagen(w, h)
+	local material = UI.Fondo()
+
+	if (!material) then return false end
+
+	local escala = math.max(w / 16, h / 9)
+	local dw, dh = 16 * escala, 9 * escala
+
+	surface.SetDrawColor(255, 255, 255, 255)
+	surface.SetMaterial(material)
+	surface.DrawTexturedRect((w - dw) / 2, (h - dh) / 2, dw, dh)
+
+	return true
+end
+
+UI.Fondo()

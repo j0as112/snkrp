@@ -311,7 +311,10 @@ end
 function PANEL:Paint(ancho, alto)
 	if (!self.usarLua) then return end
 
-	UI.FondoEstudio(ancho, alto)
+	-- Imagen de fondo; si todavia no se ha descargado, el fondo de estudio.
+	if (!UI.DibujarFondoImagen(ancho, alto)) then
+		UI.FondoEstudio(ancho, alto)
+	end
 
 	surface.SetDrawColor(0, 0, 0, 150)
 	surface.SetTexture(surface.GetTextureID("vgui/gradient-d"))
