@@ -751,11 +751,59 @@ if (CLIENT) then
 		end
 	end
 
+	-- Diagnostico: "aot_equipo_debug 1" dibuja una esfera de color donde deberia estar cada pieza y
+	-- "aot_equipo_info" escribe en la consola el estado de cada pieza (modelo, hueso, posicion).
+	local depuracion = false
+
+	concommand.Add("aot_equipo_debug", function(_, _, args)
+		depuracion = (args[1] != "0")
+	end)
+
+	concommand.Add("aot_equipo_info", function()
+		local yo = LocalPlayer()
+		local arma = yo:GetWeapon("aot_odm")
+
+		MsgN("[aot_equipo] arma aot_odm: ", IsValid(arma) and "SI" or "NO (no esta en tu lista de armas)")
+		MsgN("[aot_equipo] tu modelo: ", yo:GetModel())
+		MsgN("[aot_equipo] ShouldDrawLocalPlayer: ", tostring(yo:ShouldDrawLocalPlayer()), " | arma activa: ", IsValid(yo:GetActiveWeapon()) and yo:GetActiveWeapon():GetClass() or "ninguna")
+
+		if (!IsValid(arma)) then return end
+
+		for nombre, v in pairs(arma.WElements) do
+			local hueso = yo:LookupBone(v.bone)
+			local m = arma.AOT_Modelos and arma.AOT_Modelos[nombre]
+			local pos = "-"
+
+			if (hueso) then
+				local mat = yo:GetBoneMatrix(hueso)
+				if (mat) then pos = tostring(math.floor(mat:GetTranslation():Distance(yo:GetPos()))) .. " u del pie" end
+			end
+
+			MsgN(string.format("[aot_equipo] %s | modelo valido: %s | clientside: %s | hueso %s: %s | matriz: %s",
+				nombre, tostring(util.IsValidModel(v.model)), tostring(IsValid(m)), v.bone, tostring(hueso), pos))
+		end
+	end)
+
 	hook.Add("PostPlayerDraw", "AOT_Equipo3DMG", function(jugador)
 		local arma = jugador:GetWeapon("aot_odm")
 
 		if (IsValid(arma) and arma.DibujarEquipo) then
 			arma:DibujarEquipo(jugador)
+
+			if (depuracion) then
+				render.SetColorMaterial()
+
+				for nombre, v in pairs(arma.WElements) do
+					local hueso = jugador:LookupBone(v.bone)
+					local mat = hueso and jugador:GetBoneMatrix(hueso)
+
+					if (mat) then
+						local ang = mat:GetAngles()
+						local pos = mat:GetTranslation() + ang:Forward() * v.pos.x + ang:Right() * v.pos.y + ang:Up() * v.pos.z
+						render.DrawSphere(pos, 3, 10, 10, v.hoja and Color(255, 60, 60) or Color(60, 255, 60))
+					end
+				end
+			end
 		end
 	end)
 
