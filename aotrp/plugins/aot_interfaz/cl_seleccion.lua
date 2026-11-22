@@ -23,11 +23,9 @@ local ESTUDIO = {
 -- util.IsInWorld solo existe en el servidor: en el cliente se comprueba que el punto no esta dentro de un
 -- solido y que hay suelo debajo (una camara en el vacio daba una pantalla negra).
 local function CamaraValida(pos)
-	if (!pos or bit.band(util.PointContents(pos), CONTENTS_SOLID) != 0) then return false end
+	if (!pos) then return false end
 
-	local tr = util.TraceLine({start = pos, endpos = pos - Vector(0, 0, 3000), mask = MASK_SOLID_BRUSHONLY})
-
-	return tr.Hit and !tr.StartSolid
+	return bit.band(util.PointContents(pos), CONTENTS_SOLID) == 0
 end
 
 -- ===== Escena real del mapa (llega del servidor) =====
@@ -167,6 +165,7 @@ function PANEL:Think()
 end
 
 function PANEL:OnRemove()
+	self:DestaparMundo(false)
 	self:Limpiar()
 	if (ix.aotUI.panelSeleccion == self) then ix.aotUI.panelSeleccion = nil end
 end
@@ -247,12 +246,37 @@ function PANEL:Reconstruir()
 	end
 end
 
+-- El mundo real solo se ve si nada lo tapa: el menu principal pinta un rectangulo negro al "oscurecerse" y el
+-- contenedor pinta su degradado. Se ocultan/anulan mientras dura la escena y se restauran al salir.
+function PANEL:DestaparMundo(destapar)
+	local menu = self:GetParent()
+
+	if (!IsValid(menu)) then return end
+
+	if (destapar) then
+		if (IsValid(menu.mainPanel)) then menu.mainPanel:SetVisible(false) end
+
+		if (!menu.aotPaintOriginal) then
+			menu.aotPaintOriginal = menu.Paint
+			menu.Paint = function() end
+		end
+	else
+		if (IsValid(menu.mainPanel)) then menu.mainPanel:SetVisible(true) end
+
+		if (menu.aotPaintOriginal) then
+			menu.Paint = menu.aotPaintOriginal
+			menu.aotPaintOriginal = nil
+		end
+	end
+end
+
 function PANEL:ActualizarModo()
 	local esc = ix.aotUI.escena
 	local nuevo = esc != nil and !ix.aotUI.forzarEstudio and CamaraValida(esc.cam.pos) and self:IsVisible()
 	local cambio = (nuevo != (self.modoMundo or false))
 
 	self.modoMundo = nuevo
+	self:DestaparMundo(nuevo)
 
 	if (cambio and self:IsVisible()) then self:Reconstruir() end
 end
@@ -273,6 +297,7 @@ end
 
 function PANEL:OnSlideDown()
 	self.modoMundo = false
+	self:DestaparMundo(false)
 	self:Limpiar()
 end
 
@@ -540,6 +565,16 @@ function PANEL:Paint(w, h)
 	surface.SetDrawColor(UI.oro.r, UI.oro.g, UI.oro.b, 200)
 	surface.DrawRect(w / 2 - ScreenScale(50), ScreenScale(28), ScreenScale(100), 2)
 
+	if (ix.aotUI.debugSel) then
+		local esc = ix.aotUI.escena
+		local txt = string.format("modo: %s | escena: %s | camara valida: %s | forzarEstudio: %s | pos: %s",
+			self.modoMundo and "MUNDO" or "ESTUDIO", esc and "si" or "NO",
+			esc and tostring(CamaraValida(esc.cam.pos)) or "-", tostring(ix.aotUI.forzarEstudio),
+			esc and tostring(esc.cam.pos) or "-")
+
+		draw.SimpleTextOutlined(txt, "ixMenuMiniFont", 8, 8, Color(255, 255, 0), TEXT_ALIGN_LEFT, TEXT_ALIGN_TOP, 1, color_black)
+	end
+
 	-- botones propios (siempre visibles): Volver y Elegir
 	local bw, bh, pad = ScreenScale(70), ScreenScale(16), ScreenScale(16)
 
@@ -605,4 +640,9 @@ concommand.Add("aot_seleccion_modo", function(_, _, args)
 	if (IsValid(ix.aotUI.panelSeleccion)) then
 		ix.aotUI.panelSeleccion:ActualizarModo()
 	end
+end)
+
+-- Depuracion: "aot_seleccion_debug 1" muestra arriba a la izquierda en que modo esta la seleccion.
+concommand.Add("aot_seleccion_debug", function(_, _, args)
+	ix.aotUI.debugSel = (args[1] != "0")
 end)
