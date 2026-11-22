@@ -4,7 +4,7 @@ ix.currency.singular = "moneda"
 ix.currency.plural = "monedas"
 
 -- Ajustes por defecto (se pueden cambiar en el menú de configuración de Helix).
-ix.config.SetDefault("color", Color(120, 35, 35))
+ix.config.SetDefault("color", Color(47, 74, 58))
 ix.config.SetDefault("scoreboardRecognition", true)
 ix.config.SetDefault("maxCharacters", 3)
 

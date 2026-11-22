@@ -1,0 +1,115 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>SNK RP - Cargando</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+  :root {
+    --verde: #2f4a3a; --verde-osc: #0e1511; --cuero: #5c4028;
+    --pergamino: #d9c9a3; --acero: #8a929b; --sangre: #8c1c1c;
+    --alas: #2c4f7c; --oro: #c4a050;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; overflow: hidden; background: var(--verde-osc); color: var(--pergamino); font-family: Georgia, "Palatino Linotype", serif; }
+
+  /* Muralla: tres franjas (Maria, Rose, Sina) y cielo tormentoso. */
+  .escena { position: fixed; inset: 0; background:
+      radial-gradient(ellipse at 50% 120%, rgba(140,28,28,.35), transparent 55%),
+      linear-gradient(180deg, #151d1a 0%, #1c2a24 55%, #0e1511 100%); }
+  .muro { position: absolute; left: 0; right: 0; bottom: 0; height: 38%;
+      background:
+        repeating-linear-gradient(90deg, rgba(255,255,255,.035) 0 2px, transparent 2px 90px),
+        repeating-linear-gradient(0deg, rgba(0,0,0,.25) 0 2px, transparent 2px 54px),
+        linear-gradient(180deg, #3a3f3c, #1a1e1c);
+      border-top: 4px solid #555b57; box-shadow: 0 -20px 60px rgba(0,0,0,.6); }
+  .niebla { position: absolute; inset: 0; background:
+      radial-gradient(ellipse 60% 30% at 20% 60%, rgba(180,190,185,.07), transparent),
+      radial-gradient(ellipse 50% 25% at 80% 70%, rgba(180,190,185,.06), transparent);
+      animation: deriva 24s ease-in-out infinite alternate; }
+  @keyframes deriva { from { transform: translateX(-3%); } to { transform: translateX(3%); } }
+
+  .vineta { position: fixed; inset: 0; pointer-events: none;
+      background: radial-gradient(ellipse at center, transparent 45%, rgba(0,0,0,.75)); }
+
+  .centro { position: fixed; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 4vh 6vw; }
+
+  .alas { width: min(36vw, 260px); margin-bottom: 2.5vh; filter: drop-shadow(0 0 18px rgba(196,160,80,.25)); }
+  h1 { font-size: clamp(32px, 6vw, 84px); letter-spacing: .18em; font-weight: 800; text-transform: uppercase; color: var(--pergamino); text-shadow: 0 3px 18px rgba(0,0,0,.8); }
+  h1 span { color: var(--sangre); }
+  .lema { margin-top: 1vh; font-style: italic; color: var(--acero); font-size: clamp(14px, 1.8vw, 24px); letter-spacing: .08em; }
+  .filete { width: min(46vw, 520px); height: 2px; margin: 3vh 0; background: linear-gradient(90deg, transparent, var(--oro), transparent); }
+
+  .consejo { min-height: 4.5em; max-width: 60ch; font-size: clamp(14px, 1.5vw, 20px); line-height: 1.5; opacity: 0; transition: opacity .8s; }
+  .consejo.on { opacity: 1; }
+  .consejo b { color: var(--oro); }
+
+  .barra { position: fixed; left: 8vw; right: 8vw; bottom: 7vh; }
+  .estado { display: flex; justify-content: space-between; font-size: clamp(12px, 1.3vw, 17px); color: var(--acero); margin-bottom: 8px; letter-spacing: .06em; }
+  .pista { height: 10px; border: 1px solid rgba(138,146,155,.55); background: rgba(14,21,17,.8); position: relative; }
+  .pista i { position: absolute; left: 0; top: 0; bottom: 0; width: 0%; background: linear-gradient(90deg, var(--verde), var(--oro)); transition: width .4s ease; }
+  .pista::before, .pista::after { content: ""; position: absolute; top: -5px; width: 10px; height: 18px; border: 2px solid var(--oro); }
+  .pista::before { left: -6px; border-right: 0; } .pista::after { right: -6px; border-left: 0; }
+
+  .pie { position: fixed; bottom: 2.2vh; width: 100%; text-align: center; font-size: 12px; color: rgba(138,146,155,.6); letter-spacing: .12em; }
+</style>
+</head>
+<body>
+<div class="escena"><div class="niebla"></div><div class="muro"></div></div>
+<div class="vineta"></div>
+
+<div class="centro">
+  <!-- Alas de la Libertad, dibujadas en SVG (sin recursos externos) -->
+  <svg class="alas" viewBox="0 0 200 110" aria-hidden="true">
+    <g fill="none" stroke="#d9c9a3" stroke-width="3" stroke-linejoin="round">
+      <path d="M100 100 C 72 96 46 78 22 48 C 44 52 60 50 74 40 C 62 56 74 70 100 72 Z" fill="#2c4f7c"/>
+      <path d="M100 100 C 128 96 154 78 178 48 C 156 52 140 50 126 40 C 138 56 126 70 100 72 Z" fill="#d9c9a3" stroke="#2c4f7c"/>
+      <path d="M100 100 L100 72" stroke="#c4a050"/>
+    </g>
+  </svg>
+
+  <h1>SNK <span>RP</span></h1>
+  <p class="lema">Shinzou wo Sasageyo &mdash; Ofrece tu corazon</p>
+  <div class="filete"></div>
+  <p class="consejo" id="consejo"></p>
+</div>
+
+<div class="barra">
+  <div class="estado"><span id="estado">Conectando con los Muros...</span><span id="pct">0%</span></div>
+  <div class="pista"><i id="relleno"></i></div>
+</div>
+<div class="pie" id="pie">Los Muros: Maria &middot; Rose &middot; Sina</div>
+
+<script>
+  var CONSEJOS = [
+    "<b>Nuca.</b> Solo un corte limpio por detras y desde arriba abate a un titan.",
+    "<b>Gas.</b> Sin gas no hay maniobras: recarga en las cajas de suministros.",
+    "<b>Hojas.</b> Cada tajo las desgasta. Una hoja rota es una hoja inutil.",
+    "<b>Velocidad.</b> Lo que corta es el impulso, no la fuerza.",
+    "<b>Atrapado.</b> Si un titan te agarra, forcejea con tus hojas para cortar la mano.",
+    "<b>Ojos.</b> Ciega a un titan y perdera tu rastro un momento.",
+    "<b>Tendones.</b> Con las dos piernas cortadas, hasta el titan mas grande cae.",
+    "<b>Vapor.</b> Un titan herido humea: se esta regenerando, no esperes."
+  ];
+  var i = 0, el = document.getElementById("consejo");
+  function ver() { el.classList.remove("on"); setTimeout(function () { el.innerHTML = CONSEJOS[i++ % CONSEJOS.length]; el.classList.add("on"); }, 500); }
+  ver(); setInterval(ver, 6000);
+
+  var total = 0, pend = 0;
+  function pintar() {
+    var p = total > 0 ? Math.round(100 * (total - pend) / total) : 0;
+    document.getElementById("relleno").style.width = p + "%";
+    document.getElementById("pct").textContent = p + "%";
+  }
+
+  // Funciones que llama Garry's Mod al cargar.
+  function GameDetails(servername, serverurl, mapname, maxplayers, steamid, gamemode) {
+    document.getElementById("pie").textContent = (servername || "SNK RP") + " · " + (mapname || "") + " · " + (maxplayers || "") + " jugadores";
+  }
+  function SetFilesTotal(t) { total = t; pintar(); }
+  function SetFilesNeeded(n) { pend = n; pintar(); }
+  function DownloadingFile(f) { document.getElementById("estado").textContent = "Descargando: " + String(f).split("/").pop(); }
+  function SetStatusChanged(s) { document.getElementById("estado").textContent = s; }
+</script>
+</body>
+</html>
