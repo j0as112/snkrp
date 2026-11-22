@@ -1,6 +1,7 @@
 # Indice
 
 - [[titanes]] — titanes: animacion, movimiento, ataques, colision y trampas.
+- [[modelos]] — modelos de jugador por facción (Workshop SNK Modelos).
 - [[interfaz]] — tema AoT de Helix, skin, pantalla de carga.
 - [[changelog]] — registro de cambios para jugadores.
 

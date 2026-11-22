@@ -1,6 +1,9 @@
 # Changelog
 
 ## 22/11/2026
+- Modelos:
+  - Cada cuerpo (civiles, cadetes, exploracion, guarnicion y policia) usa ahora sus propios modelos de uniforme.
+  - Arreglados los modelos que no se veian.
 - Interfaz:
   - Nuevo aspecto de Attack on Titan para los menus, fichas, barras e inventario.
   - Nueva pantalla de muerte.
