@@ -205,6 +205,11 @@ local CONTENEDOR = vgui.GetControlTable("ixCharMenu")
 
 if (CONTENEDOR) then
 	function CONTENEDOR:Paint(width, height)
+		-- Con la camara real del mapa (seleccion de personaje) el mundo tiene que verse detras.
+		local sel = ix.aotUI.panelSeleccion
+
+		if (IsValid(sel) and sel:IsVisible() and sel.modoMundo) then return end
+
 		surface.SetDrawColor(UI.verdeOsc.r, UI.verdeOsc.g, UI.verdeOsc.b, 255)
 		surface.DrawRect(0, 0, width, height)
 

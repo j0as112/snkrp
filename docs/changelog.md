@@ -10,6 +10,7 @@
   - Nueva pantalla de carga.
   - Nuevo menu de personaje con el logo del servidor.
   - Nuevo aspecto del menu principal.
+  - Nueva seleccion de personaje: tus personajes aparecen en una escena en 3D y se elige haciendo clic sobre ellos.
 - Titanes:
   - Arreglado que los titanes se quedaran congelados sin ninguna animacion (andar, agarrar, comer, caer y morir).
   - Los titanes normales ya solo caminan y la animacion de caminar funciona.

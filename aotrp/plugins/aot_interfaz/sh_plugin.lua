@@ -5,3 +5,5 @@ PLUGIN.description = "Tema visual de Attack on Titan para toda la interfaz de He
 ix.util.Include("cl_tema.lua")
 ix.util.Include("cl_skin.lua")
 ix.util.Include("cl_personaje.lua")
+ix.util.Include("cl_seleccion.lua")
+ix.util.Include("sv_seleccion.lua")
