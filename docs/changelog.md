@@ -3,6 +3,10 @@
 ## 22/11/2026
 - Mapa:
   - Nuevo mapa principal: Shiganshina. Se descarga solo al entrar al servidor.
+- Titanes y edificios:
+  - Los titanes ya no atraviesan edificios: rodean las casas y van por las calles y plazas donde caben.
+  - Ya no se meten por callejones estrechos, bajo arcos o dentro de casas; si te escondes dentro, te esperan fuera.
+  - Ya no aparecen de golpe al otro lado de una pared cuando se atascan.
 - Equipo de maniobras (3DMG):
   - El gas dura mucho mas: ahora se gasta bastante menos al recoger el cable y al propulsarse.
   - El equipo se ve ahora en el personaje: la cintura con el gas y las vainas siempre que lo lleves puesto, y las espadas en las manos cuando lo usas.

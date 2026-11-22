@@ -321,6 +321,89 @@ if (SERVER) then
 		return navmesh.IsLoaded() and navmesh.GetNavAreaCount() > 0
 	end
 
+	-- Tamaño real del cuerpo (la caja de colisión es más pequeña para poder navegar).
+	function ENT:RadioCuerpo()
+		return 11 * self:GetEscala()
+	end
+
+	function ENT:AlturaCuerpo()
+		return 70 * self:GetEscala()
+	end
+
+	-- Solo cuentan el mundo y los objetos fijos (casas prop_dynamic, puertas...), no jugadores ni NPCs.
+	local function FiltroMuros(ent)
+		if (!IsValid(ent)) then return true end
+		return !(ent:IsPlayer() or ent:IsNPC() or ent:IsNextBot() or ent:GetClass() == "prop_physics")
+	end
+
+	-- ¿Cabe el titán en esta zona del navmesh? (medidas en aot_titanes_nav.lua)
+	-- Devuelve false si no cabe, o un recargo de coste si cabe justo.
+	function ENT:CabeEn(area)
+		if (!AOT.MedirZona) then return 0 end
+
+		local info = AOT.MedirZona(area)
+		local radio = self:RadioCuerpo()
+
+		if (info.techo < math.min(self:AlturaCuerpo() * 0.8, 3000)) then return false end
+		if (info.hueco < radio * 1.2) then return false end
+
+		-- Callejones donde cabe justo: se evitan si hay otro camino.
+		if (info.hueco < radio * 2.2) then return 3 end
+
+		return 0
+	end
+
+	-- Coste de cada tramo para Path:Compute: prohíbe interiores, callejones, escalones y caídas.
+	function ENT:CosteNav()
+		if (self.AOT_Coste and self.AOT_CosteEscala == self:GetEscala()) then return self.AOT_Coste end
+
+		local paso = self.loco:GetStepHeight()
+		local caida = math.max(300, 40 * self:GetEscala())
+
+		self.AOT_CosteEscala = self:GetEscala()
+		self.AOT_Coste = function(area, desde, escalera, ascensor, largo)
+			if (!IsValid(desde)) then return 0 end
+			if (IsValid(escalera) or IsValid(ascensor)) then return -1 end
+
+			local cabe = self:CabeEn(area)
+			if (cabe == false) then return -1 end
+
+			local dz = desde:ComputeAdjacentConnectionHeightChange(area)
+			if (dz > paso or dz < -caida) then return -1 end
+
+			local dist = (largo and largo > 0) and largo or desde:GetCenter():Distance(area:GetCenter())
+			return desde:GetCostSoFar() + dist * (1 + cabe)
+		end
+
+		return self.AOT_Coste
+	end
+
+	-- Si el destino está donde el titán no cabe (dentro de una casa, en un callejón), va al punto
+	-- accesible más cercano y espera ahí a que la presa salga o quede al alcance de la mano.
+	function ENT:DestinoAccesible(destino)
+		local cache = self.AOT_Accesible
+		if (cache and cache.origen:DistToSqr(destino) < 100 * 100 and CurTime() < cache.hasta) then return cache.punto end
+
+		local punto = destino
+		local area = navmesh.GetNearestNavArea(destino, false, 400, false, true)
+
+		if (!IsValid(area) or self:CabeEn(area) == false) then
+			local mejor, mejorDist
+
+			for _, a in ipairs(navmesh.Find(destino, 30 * self:GetEscala() + 600, 600, 600)) do
+				if (self:CabeEn(a) != false) then
+					local d = a:GetClosestPointOnArea(destino):DistToSqr(destino)
+					if (!mejorDist or d < mejorDist) then mejor, mejorDist = a, d end
+				end
+			end
+
+			if (mejor) then punto = mejor:GetClosestPointOnArea(destino) end
+		end
+
+		self.AOT_Accesible = {origen = destino, punto = punto, hasta = CurTime() + 1}
+		return punto
+	end
+
 	function ENT:PasoHacia(path, destino, correr)
 		self:Animar(correr and ACT_RUN or ACT_WALK)
 		self.loco:SetDesiredSpeed(self:Velocidad(correr))
@@ -328,14 +411,16 @@ if (SERVER) then
 		local desviando = (self.AOT_DesvioHasta or 0) > CurTime()
 
 		if (self:HayNavmesh() and !desviando) then
-			if (!path:IsValid() or path:GetAge() > 0.6 or path:GetEnd():DistToSqr(destino) > 200 * 200) then
-				path:Compute(self, destino)
+			local meta = self:DestinoAccesible(destino)
+
+			if (!path:IsValid() or path:GetAge() > 0.8 or path:GetEnd():DistToSqr(meta) > 200 * 200) then
+				path:Compute(self, meta, self:CosteNav())
 			end
 
 			if (path:IsValid()) then
 				path:Update(self)
 			else
-				self:Directo(destino)
+				self:Directo(meta)
 			end
 		else
 			self:Directo(destino)
@@ -344,10 +429,32 @@ if (SERVER) then
 		self:ComprobarAtasco()
 	end
 
+	-- ¿Puede avanzar el cuerpo entero en esa dirección? Se mira a la altura de las piernas y del pecho
+	-- con el ancho real del titán, contra muros y casas (también las de entidad).
+	function ENT:Libre(dir, largo)
+		local pos = self:GetPos()
+		local radio = math.min(self:RadioCuerpo(), 120)
+		local paso = self.loco:GetStepHeight()
+
+		for _, h in ipairs({paso + 8, self:AlturaCuerpo() * 0.55}) do
+			local tr = util.TraceHull({
+				start = pos + Vector(0, 0, h),
+				endpos = pos + Vector(0, 0, h) + dir * largo,
+				mins = Vector(-radio, -radio, 0),
+				maxs = Vector(radio, radio, radio),
+				mask = MASK_NPCSOLID,
+				filter = FiltroMuros
+			})
+
+			if (tr.Hit) then return false end
+		end
+
+		return true
+	end
+
 	-- Movimiento directo con "bigotes": si hay algo delante, prueba ángulos hasta encontrar paso.
 	function ENT:Directo(destino)
 		local pos = self:GetPos()
-		local escala = self:GetEscala()
 		local dir = destino - pos
 		dir.z = 0
 
@@ -357,29 +464,16 @@ if (SERVER) then
 		if ((self.AOT_DesvioHasta or 0) > CurTime() and self.AOT_DesvioDir) then
 			dir = self.AOT_DesvioDir
 		else
-			local altura = Vector(0, 0, math.min(12 * escala, 80))
-			local largo = math.max(70, 14 * escala)
+			local largo = math.max(120, 16 * self:GetEscala())
 
-			local function Libre(d)
-				local tr = util.TraceHull({
-					start = pos + altura,
-					endpos = pos + altura + d * largo,
-					mins = Vector(-16, -16, 0),
-					maxs = Vector(16, 16, 16),
-					mask = MASK_NPCSOLID_BRUSHONLY,
-					filter = self
-				})
-				return !tr.Hit
-			end
-
-			if (!Libre(dir)) then
-				for _, a in ipairs({35, -35, 70, -70, 110, -110}) do
+			if (!self:Libre(dir, largo)) then
+				for _, a in ipairs({30, -30, 60, -60, 95, -95, 135, -135}) do
 					local d = Vector(dir)
 					d:Rotate(Angle(0, a, 0))
 
-					if (Libre(d)) then
+					if (self:Libre(d, largo)) then
 						self.AOT_DesvioDir = d
-						self.AOT_DesvioHasta = CurTime() + 1.2
+						self.AOT_DesvioHasta = CurTime() + 1.5
 						dir = d
 						break
 					end
@@ -414,33 +508,50 @@ if (SERVER) then
 		end
 	end
 
+	-- ¿Cabe el titán de pie en ese punto? (cuerpo libre y sin techo encima)
+	function ENT:SitioLibre(punto)
+		local mins, maxs = self:GetCollisionBounds()
+		local hull = util.TraceHull({start = punto + Vector(0, 0, 8), endpos = punto + Vector(0, 0, 8), mins = mins, maxs = maxs, mask = MASK_NPCSOLID, filter = FiltroMuros})
+		if (hull.Hit or hull.StartSolid) then return false end
+
+		local arriba = util.TraceLine({start = punto + Vector(0, 0, 40), endpos = punto + Vector(0, 0, self:AlturaCuerpo()), mask = MASK_NPCSOLID, filter = FiltroMuros})
+		return !arriba.Hit or arriba.HitSky
+	end
+
 	function ENT:Desatascar()
 		local n = self.AOT_Atascos or 1
 		self.loco:ClearStuck()
 
-		if (n <= 3) then
-			-- Rodear el obstáculo por un lado.
-			self.AOT_DesvioDir = self:GetRight() * (math.random(2) == 1 and 1 or -1) + self:GetForward() * -0.3
+		if (n <= 4) then
+			-- Rodear el obstáculo: hacia un lado y, a partir del tercer intento, también hacia atrás.
+			local lado = (n % 2 == 1) and 1 or -1
+			self.AOT_DesvioDir = self:GetRight() * lado + self:GetForward() * (n >= 3 and -0.8 or -0.3)
 			self.AOT_DesvioDir:Normalize()
-			self.AOT_DesvioHasta = CurTime() + 1.5
-		else
-			-- Recolocación: busca un hueco libre cerca (un titán no se queda clavado en un árbol).
-			local mins, maxs = self:GetCollisionBounds()
-			local pos = self:GetPos()
+			self.AOT_DesvioHasta = CurTime() + 1.5 + 0.5 * n
+			self.AOT_Accesible = nil
+			return
+		end
 
-			for _ = 1, 10 do
-				local candidato = pos + Angle(0, math.random(0, 359), 0):Forward() * math.random(80, 220) + Vector(0, 0, 24)
-				local tr = util.TraceHull({start = candidato, endpos = candidato, mins = mins, maxs = maxs, mask = MASK_NPCSOLID_BRUSHONLY, filter = self})
+		-- Último recurso: recolocarse en una zona abierta cercana del navmesh. Nunca dentro de un
+		-- edificio ni al otro lado de una pared: el sitio tiene que verse desde donde está.
+		local pos = self:GetPos()
+		local alto = self.loco:GetStepHeight() + 16
 
-				if (!tr.Hit and !tr.StartSolid) then
-					local suelo = util.TraceLine({start = candidato, endpos = candidato - Vector(0, 0, 600), mask = MASK_NPCSOLID_BRUSHONLY, filter = self})
-					self:SetPos(suelo.HitPos + Vector(0, 0, 2))
-					break
+		if (self:HayNavmesh()) then
+			for _, area in ipairs(navmesh.Find(pos, 400, 200, 200)) do
+				if (self:CabeEn(area) == 0) then
+					local punto = area:GetCenter()
+					local vista = util.TraceLine({start = pos + Vector(0, 0, alto), endpos = punto + Vector(0, 0, alto), mask = MASK_NPCSOLID, filter = FiltroMuros})
+
+					if (!vista.Hit and punto:DistToSqr(pos) > 60 * 60 and self:SitioLibre(punto)) then
+						self:SetPos(punto + Vector(0, 0, 2))
+						break
+					end
 				end
 			end
-
-			self.AOT_Atascos = 0
 		end
+
+		self.AOT_Atascos = 0
 	end
 
 	-- ============================================================
@@ -477,7 +588,15 @@ if (SERVER) then
 
 		if (self:HayNavmesh()) then
 			local areas = navmesh.Find(self:GetPos(), self:Ciego() and 600 or 2500, 300, 300)
-			if (#areas > 0) then destino = areas[math.random(#areas)]:GetRandomPoint() end
+
+			-- Solo zonas abiertas donde quepa (calles y plazas, no interiores).
+			for _ = 1, 12 do
+				local a = areas[math.random(math.max(#areas, 1))]
+				if (IsValid(a) and self:CabeEn(a) == 0) then
+					destino = a:GetRandomPoint()
+					break
+				end
+			end
 		end
 
 		destino = destino or (self:GetPos() + Angle(0, math.random(0, 359), 0):Forward() * math.random(500, 1500))
