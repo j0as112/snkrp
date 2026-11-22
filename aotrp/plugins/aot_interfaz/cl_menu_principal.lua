@@ -119,6 +119,9 @@ local PAGINA = [[
 </html>
 ]]
 
+-- Por defecto se usa el menu dibujado en Lua (fiable); "aot_menu_html 1" prueba la pagina HTML.
+local CVAR_HTML = CreateClientConVar("aot_menu_html", "0", true, false)
+
 local PANEL = {}
 
 AccessorFunc(PANEL, "bUsingCharacter", "UsingCharacter", FORCE_BOOL)
@@ -144,23 +147,31 @@ function PANEL:Init()
 		end
 	}
 
-	self.html = self:Add("DHTML")
-	self.html:SetSize(ScrW(), ScrH())
-	self.html:SetPos(0, 0)
+	self.nacido = CurTime()
+	self.htmlListo = false
+	self.usarLua = !CVAR_HTML:GetBool()
 
-	self.html:AddFunction("gmod", "Trigger", function(accion)
-		self:Accion(accion)
-	end)
+	if (!self.usarLua) then
+		self.html = self:Add("DHTML")
+		self.html:SetSize(ScrW(), ScrH())
+		self.html:SetPos(0, 0)
 
-	self.html:AddFunction("gmod", "Hover", function()
-		surface.PlaySound("helix/ui/rollover.wav")
-	end)
+		self.html:AddFunction("gmod", "Trigger", function(accion)
+			self:Accion(accion)
+		end)
 
-	self.html.OnDocumentReady = function()
-		self:Refrescar()
+		self.html:AddFunction("gmod", "Hover", function()
+			surface.PlaySound("helix/ui/rollover.wav")
+		end)
+
+		self.html.OnDocumentReady = function()
+			self.htmlListo = true
+			MsgN("[aot_interfaz] Menu de bienvenida HTML cargado.")
+			self:Refrescar()
+		end
+
+		self.html:SetHTML(PAGINA)
 	end
-
-	self.html:SetHTML(PAGINA)
 end
 
 -- Estado de los botones segun el jugador (lo pinta el JS de la pagina).
@@ -251,7 +262,7 @@ function PANEL:OnUndim()
 
 	self.bUsingCharacter = LocalPlayer().GetCharacter and LocalPlayer():GetCharacter()
 
-	if (IsValid(self.html)) then
+	if (IsValid(self.html) and !self.usarLua) then
 		self.html:SetVisible(true)
 		self.html:SetMouseInputEnabled(true)
 	end
@@ -267,8 +278,109 @@ function PANEL:OnClose()
 	end
 end
 
--- El fondo lo dibuja la pagina; sin velo ni escalado de la clase base.
+-- Si la pagina HTML no arranca (el navegador embebido de algunos clientes no la dibuja), se usa un menu
+-- equivalente dibujado en Lua: mismo fondo, mismo panel, mismos botones.
+function PANEL:Think()
+	if (!self.usarLua and !self.htmlListo and CurTime() > (self.nacido or 0) + 1.5) then
+		self.usarLua = true
+
+		MsgN("[aot_interfaz] El menu HTML no arranco: se usa el menu en Lua.")
+
+		if (IsValid(self.html)) then self.html:SetVisible(false) end
+	end
+end
+
+function PANEL:Botones()
+	local lista = {
+		{id = "new", texto = "NUEVO SOLDADO"},
+		{id = "load", texto = "CONTINUAR", apagado = self.cargarDeshabilitado},
+	}
+
+	local url = ix.config.Get("communityURL", "")
+	local texto = ix.config.Get("communityText", "@community")
+
+	if (url != "" and texto != "") then
+		lista[#lista + 1] = {id = "community", texto = ((texto:sub(1, 1) == "@") and L(texto:sub(2)) or texto):utf8upper()}
+	end
+
+	lista[#lista + 1] = {id = "exit", texto = self.bUsingCharacter and "VOLVER AL JUEGO" or "ABANDONAR", peligro = true}
+
+	return lista
+end
+
 function PANEL:Paint(ancho, alto)
+	if (!self.usarLua) then return end
+
+	UI.FondoEstudio(ancho, alto)
+
+	surface.SetDrawColor(0, 0, 0, 150)
+	surface.SetTexture(surface.GetTextureID("vgui/gradient-d"))
+	surface.DrawTexturedRect(0, 0, ancho, alto * 0.2)
+
+	local px, pw = ancho * 0.07, math.max(ancho * 0.32, 380)
+	local lista = self:Botones()
+	local bh, gap = ScreenScale(17), ScreenScale(4)
+	local cabecera = ScreenScale(104)
+	local ph = cabecera + #lista * (bh + gap) + ScreenScale(22)
+	local py = (alto - ph) / 2
+
+	surface.SetDrawColor(14, 21, 17, 190)
+	surface.DrawRect(px, py, pw, ph)
+	surface.SetDrawColor(UI.oro.r, UI.oro.g, UI.oro.b, 90)
+	surface.DrawOutlinedRect(px, py, pw, ph)
+	UI.Marco(px, py, pw, ph, UI.oro, 20)
+
+	local logo = UI.Logo()
+	local ls = ScreenScale(44)
+
+	if (logo) then
+		surface.SetDrawColor(255, 255, 255, 255)
+		surface.SetMaterial(logo)
+		surface.DrawTexturedRect(px + pw / 2 - ls / 2, py + ScreenScale(8), ls, ls)
+		surface.SetDrawColor(UI.oro.r, UI.oro.g, UI.oro.b, 200)
+		surface.DrawOutlinedRect(px + pw / 2 - ls / 2, py + ScreenScale(8), ls, ls, 2)
+	end
+
+	draw.SimpleText("SNK RP", "aotTitulo", px + pw / 2, py + ScreenScale(66), UI.pergamino, TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
+	draw.SimpleText("Shinzou wo Sasageyo", "aotSubtitulo", px + pw / 2, py + ScreenScale(88), UI.acero, TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
+
+	surface.SetDrawColor(UI.oro.r, UI.oro.g, UI.oro.b, 160)
+	surface.DrawRect(px + ScreenScale(12), py + cabecera - ScreenScale(6), pw - ScreenScale(24), 2)
+
+	local mx, my = self:CursorPos()
+	self.rectas = {}
+
+	for i, b in ipairs(lista) do
+		local bx, by, bw = px + ScreenScale(12), py + cabecera + (i - 1) * (bh + gap), pw - ScreenScale(24)
+		local encima = !b.apagado and mx >= bx and mx <= bx + bw and my >= by and my <= by + bh
+
+		surface.SetDrawColor(b.peligro and 120 or UI.verde.r, b.peligro and 25 or UI.verde.g, b.peligro and 25 or UI.verde.b, encima and 235 or 120)
+		surface.DrawRect(bx, by, bw, bh)
+
+		if (encima) then
+			surface.SetDrawColor(UI.oro.r, UI.oro.g, UI.oro.b, 255)
+			surface.DrawRect(bx, by, 5, bh)
+		end
+
+		draw.SimpleText(b.texto, "ixMenuButtonFont", bx + ScreenScale(12) + (encima and 8 or 0), by + bh / 2, ColorAlpha(encima and color_white or UI.pergamino, b.apagado and 90 or 255), TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
+
+		self.rectas[#self.rectas + 1] = {x = bx, y = by, w = bw, h = bh, id = b.id, apagado = b.apagado}
+	end
+
+	draw.SimpleText("LOS MUROS - MARIA - ROSE - SINA", "ixMenuMiniFont", px + pw / 2, py + ph - ScreenScale(8), ColorAlpha(UI.acero, 140), TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
+end
+
+function PANEL:OnMousePressed(codigo)
+	if (!self.usarLua or codigo != MOUSE_LEFT) then return end
+
+	local mx, my = self:CursorPos()
+
+	for _, r in ipairs(self.rectas or {}) do
+		if (!r.apagado and mx >= r.x and mx <= r.x + r.w and my >= r.y and my <= r.y + r.h) then
+			self:Accion(r.id)
+			return
+		end
+	end
 end
 
 vgui.Register("ixCharMenuMain", PANEL, "ixCharMenuPanel")

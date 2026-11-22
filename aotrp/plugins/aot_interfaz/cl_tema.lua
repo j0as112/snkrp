@@ -49,3 +49,89 @@ function UI.Plancha(x, y, w, h, alfa)
 	surface.SetDrawColor(UI.acero.r, UI.acero.g, UI.acero.b, 60)
 	surface.DrawOutlinedRect(x, y, w, h)
 end
+
+-- Dibujo compartido (menu de bienvenida y seleccion de personaje).
+-- Degradado vertical por bandas (no depende de texturas del motor).
+function UI.Degradado(x, y, w, h, c1, c2, pasos)
+	pasos = pasos or 40
+
+	for i = 0, pasos - 1 do
+		local f = i / (pasos - 1)
+
+		surface.SetDrawColor(Lerp(f, c1.r, c2.r), Lerp(f, c1.g, c2.g), Lerp(f, c1.b, c2.b), 255)
+		surface.DrawRect(x, y + h * i / pasos, w, math.ceil(h / pasos) + 1)
+	end
+end
+
+
+-- Fondo del diorama de estudio: cielo de tormenta con resplandor, muralla y suelo.
+function UI.FondoEstudio(w, h)
+	local horizonte = h * 0.58
+
+	-- cielo: verde azulado oscuro arriba, ocre rojizo cerca del horizonte
+	UI.Degradado(0, 0, w, horizonte, Color(26, 40, 38), Color(138, 82, 52), 48)
+
+	-- sol bajo detras de la muralla
+	draw.NoTexture()
+
+	for r = 6, 1, -1 do
+		surface.SetDrawColor(255, 170, 90, 9)
+		surface.DrawTexturedRectRotated(w * 0.5, horizonte - h * 0.03, w * 0.16 * r, h * 0.16 * r, 0)
+	end
+
+	-- muralla: franja con juntas de bloques
+	local alto = h * 0.12
+
+	surface.SetDrawColor(52, 58, 56, 255)
+	surface.DrawRect(0, horizonte - alto, w, alto)
+
+	surface.SetDrawColor(30, 34, 33, 255)
+
+	for fila = 1, 3 do
+		surface.DrawRect(0, horizonte - alto + alto * fila / 4, w, 2)
+	end
+
+	for col = 0, math.ceil(w / 110) do
+		surface.DrawRect(col * 110 + ((col % 2) * 55), horizonte - alto, 2, alto)
+	end
+
+	surface.SetDrawColor(120, 124, 120, 200)
+	surface.DrawRect(0, horizonte - alto, w, 3)
+
+	-- suelo
+	UI.Degradado(0, horizonte, w, h - horizonte, Color(34, 44, 38), Color(12, 16, 14), 36)
+
+	-- niebla baja
+	surface.SetDrawColor(190, 200, 190, 18)
+	surface.DrawRect(0, horizonte - 6, w, h * 0.08)
+end
+
+
+-- Logo de SNKRP: se descarga una vez de la pagina de carga y se guarda en data/ (los clientes no reciben
+-- materiales sueltos del servidor). UI.Logo() devuelve el material, o nil si aun no esta.
+local LOGO_URL = "https://j0as112.github.io/snkrp/logo.jpg"
+local LOGO_ARCHIVO = "snkrp_logo.jpg"
+
+function UI.Logo()
+	if (UI.logoMaterial) then return UI.logoMaterial end
+
+	if (file.Exists(LOGO_ARCHIVO, "DATA")) then
+		UI.logoMaterial = Material("data/" .. LOGO_ARCHIVO, "smooth")
+
+		if (UI.logoMaterial and UI.logoMaterial:IsError()) then UI.logoMaterial = nil end
+
+		return UI.logoMaterial
+	end
+
+	if (!UI.logoPedido) then
+		UI.logoPedido = true
+
+		http.Fetch(LOGO_URL, function(cuerpo, tamano, cabeceras, codigo)
+			if (codigo == 200 and tamano > 1000) then
+				file.Write(LOGO_ARCHIVO, cuerpo)
+			end
+		end, function() end)
+	end
+end
+
+UI.Logo()

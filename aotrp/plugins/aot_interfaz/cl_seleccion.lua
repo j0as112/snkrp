@@ -390,17 +390,7 @@ function PANEL:OnMousePressed(codigo)
 	end
 end
 
--- Degradado vertical por bandas (no depende de texturas del motor).
-local function Degradado(x, y, w, h, c1, c2, pasos)
-	pasos = pasos or 40
-
-	for i = 0, pasos - 1 do
-		local f = i / (pasos - 1)
-
-		surface.SetDrawColor(Lerp(f, c1.r, c2.r), Lerp(f, c1.g, c2.g), Lerp(f, c1.b, c2.b), 255)
-		surface.DrawRect(x, y + h * i / pasos, w, math.ceil(h / pasos) + 1)
-	end
-end
+local Degradado = UI.Degradado
 
 -- Luz de estudio: clave calida desde delante-arriba, contraluz azul detras.
 local function Luz(mundo)
@@ -413,47 +403,7 @@ local function Luz(mundo)
 	render.SetModelLighting(BOX_BOTTOM, 0.3, 0.3, 0.3)
 end
 
--- Fondo del diorama de estudio: cielo de tormenta con resplandor, muralla y suelo.
-local function FondoEstudio(w, h)
-	local horizonte = h * 0.58
-
-	-- cielo: verde azulado oscuro arriba, ocre rojizo cerca del horizonte
-	Degradado(0, 0, w, horizonte, Color(26, 40, 38), Color(138, 82, 52), 48)
-
-	-- sol bajo detras de la muralla
-	draw.NoTexture()
-
-	for r = 6, 1, -1 do
-		surface.SetDrawColor(255, 170, 90, 9)
-		surface.DrawTexturedRectRotated(w * 0.5, horizonte - h * 0.03, w * 0.16 * r, h * 0.16 * r, 0)
-	end
-
-	-- muralla: franja con juntas de bloques
-	local alto = h * 0.12
-
-	surface.SetDrawColor(52, 58, 56, 255)
-	surface.DrawRect(0, horizonte - alto, w, alto)
-
-	surface.SetDrawColor(30, 34, 33, 255)
-
-	for fila = 1, 3 do
-		surface.DrawRect(0, horizonte - alto + alto * fila / 4, w, 2)
-	end
-
-	for col = 0, math.ceil(w / 110) do
-		surface.DrawRect(col * 110 + ((col % 2) * 55), horizonte - alto, 2, alto)
-	end
-
-	surface.SetDrawColor(120, 124, 120, 200)
-	surface.DrawRect(0, horizonte - alto, w, 3)
-
-	-- suelo
-	Degradado(0, horizonte, w, h - horizonte, Color(34, 44, 38), Color(12, 16, 14), 36)
-
-	-- niebla baja
-	surface.SetDrawColor(190, 200, 190, 18)
-	surface.DrawRect(0, horizonte - 6, w, h * 0.08)
-end
+local FondoEstudio = UI.FondoEstudio
 
 function PANEL:Paint(w, h)
 	self.botones = {}

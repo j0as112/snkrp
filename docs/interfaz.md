@@ -12,7 +12,9 @@ Tema visual de Attack on Titan para Helix, replicando el metodo del servidor de 
 - **Pantalla de carga**: `web/loading/index.html` (HTML autonomo, sin recursos externos). Es lo que carga `sv_loadingurl`.
 
 ## Menu de bienvenida (`cl_menu_principal.lua`)
-Lo primero que se ve al conectar (Nuevo soldado / Continuar / Comunidad / Abandonar), hecho como el de Naruto: una **pagina HTML a pantalla completa** (DHTML) con escena de fondo (cielo de tormenta, sol bajo, muralla, niebla y ceniza flotando en un canvas) y un **panel de cristal** con el logo de SNKRP, el titulo, el lema y botones con barra dorada animada. Lua solo conecta los botones: `gmod.Trigger('new'|'load'|'community'|'exit')` y `gmod.Hover()` (sonido).
+**Por defecto se dibuja en Lua** (fondo de estudio, panel de cristal con el logo, botones con barra dorada) porque la pagina HTML no se renderizo en el cliente de pruebas (el plugin cargaba sin errores pero el DHTML salia vacio). El HTML sigue disponible con `aot_menu_html 1` en la consola del cliente. El logo se descarga una vez de la pagina de carga a `data/snkrp_logo.jpg` (`ix.aotUI.Logo()`).
+
+Version HTML: lo primero que se ve al conectar (Nuevo soldado / Continuar / Comunidad / Abandonar), hecho como el de Naruto: una **pagina HTML a pantalla completa** (DHTML) con escena de fondo (cielo de tormenta, sol bajo, muralla, niebla y ceniza flotando en un canvas) y un **panel de cristal** con el logo de SNKRP, el titulo, el lema y botones con barra dorada animada. Lua solo conecta los botones: `gmod.Trigger('new'|'load'|'community'|'exit')` y `gmod.Hover()` (sonido).
 - Sustituye a `ixCharMenuMain` y mantiene el contrato con Helix: `Dim/Undim`, `loadButton:SetDisabled` (compat), `UpdateReturnButton` y `bUsingCharacter` ("Abandonar" si no hay personaje activo, "Volver al juego" si lo hay).
 - "Continuar" se desactiva si no hay personajes. "Comunidad" solo sale si `communityURL` esta configurado.
 - El logo se carga de `https://j0as112.github.io/snkrp/logo.jpg`; si falla, solo se ve el texto.
