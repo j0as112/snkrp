@@ -29,7 +29,7 @@ AOT.PRIORIDAD = {1, 2, 5, 6, 3, 4, 7}
 
 -- Radio de cada parte en unidades del modelo sin escalar (se multiplica por la escala).
 AOT.RADIO_PARTE = {
-	[1] = 5.5,
+	[1] = 8,
 	[2] = 5,
 	[3] = 4.5,
 	[4] = 4.5,

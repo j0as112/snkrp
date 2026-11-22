@@ -15,6 +15,14 @@
   - Nuevo aspecto del menu principal.
   - Nueva seleccion de personaje: tus personajes aparecen en una escena en 3D y se elige haciendo clic sobre ellos.
 - Titanes:
+  - Mutilaciones:
+    - Al cortar un brazo, desaparece entero y vuelve a crecer poco a poco desde el codo (ya no se queda fino).
+    - Mucho mas vapor al regenerarse; el brazo que crece queda envuelto en vapor.
+  - Al derribarlos cortando los dos tendones, ahora se quedan tumbados en el suelo hasta recuperarse.
+  - Matar a un titan por la nuca es mas facil:
+    - Los ganchos se clavan solos junto a la nuca cuando miras hacia un titan, y al fijarlo se fija la nuca.
+    - La nuca es mas grande, se acierta mas facil y un buen tajo con algo de velocidad basta.
+    - Con el titan derribado, la nuca es aun mas facil.
   - Arreglado que los titanes se quedaran congelados sin ninguna animacion (andar, agarrar, comer, caer y morir).
   - Los titanes normales ya solo caminan y la animacion de caminar funciona.
   - Los titanes ya no saltan.

@@ -236,10 +236,56 @@ function SWEP:AnclajeAuto()
 	return IsValid(owner) and owner:GetInfoNum("aot_anclaje_auto", 1) != 0
 end
 
+-- Anclaje a la nuca: si miras hacia un titán al alcance, cada gancho se clava a un lado de la
+-- nuca (un poco por encima y por detrás), para que al recoger cable acabes justo en ella.
+local function AnclajeNuca(owner, lado, rango, titan)
+	local eye, aim = owner:GetShootPos(), owner:GetAimVector()
+	local mejor, mejorCos = titan, nil
+
+	for _, ent in ipairs(titan and {} or ents.FindInSphere(eye, rango)) do
+		if (AOT.EsTitan(ent) and !ent:GetMuerto()) then
+			local nuca = AOT.PuntoParte(ent, AOT.PARTE.NUCA)
+			local cos = (nuca - eye):GetNormalized():Dot(aim)
+
+			if (cos > 0.8 and (!mejorCos or cos > mejorCos)) then
+				mejor, mejorCos = ent, cos
+			end
+		end
+	end
+
+	if (!mejor) then return end
+
+	local radio = AOT.RadioParte(mejor, AOT.PARTE.NUCA)
+	local punto = AOT.PuntoParte(mejor, AOT.PARTE.NUCA)
+		+ mejor:GetRight() * (lado == 1 and -1 or 1) * radio * 0.9
+		- mejor:GetForward() * radio * 0.4
+		+ Vector(0, 0, radio * 0.5)
+
+	local dir = (punto - eye):GetNormalized()
+
+	-- Si hay una pared en medio, no vale (el titán sí puede estar en medio: el gancho se clava en él).
+	local muro = util.TraceLine({start = eye, endpos = punto, mask = MASK_SOLID_BRUSHONLY})
+	if (muro.Hit) then return end
+
+	-- El ancla se sujeta al hueso del cuello, así sigue a la nuca aunque el titán se mueva.
+	return {
+		Hit = true,
+		HitSky = false,
+		HitPos = punto,
+		Normal = dir,
+		Fraction = punto:Distance(eye) / rango,
+		Entity = mejor,
+		AOT_Hueso = AOT.Hueso(mejor, AOT.HUESO.CUELLO),
+	}
+end
+
 function SWEP:BuscarAnclaje(lado)
 	local owner = self:GetOwner()
 	local eye = owner:GetShootPos()
 	local rango = AOT.Config("aotRangoGancho", 2600)
+
+	local nuca = AnclajeNuca(owner, lado, rango)
+	if (nuca) then return nuca end
 	local ideal = math.min(900, rango * 0.4)
 	local base = owner:EyeAngles()
 
@@ -301,7 +347,14 @@ function SWEP:LanzarGanchos()
 	for lado = 1, 2 do
 		local dir, tr
 
-		if (AOT.EsTitan(objetivo) and parte > 0) then
+		-- Nuca fijada: cada gancho a un lado de la nuca, sujeto al cuello.
+		if (AOT.EsTitan(objetivo) and parte == AOT.PARTE.NUCA) then
+			tr = AnclajeNuca(owner, lado, rango, objetivo)
+		end
+
+		if (tr) then
+			dir = tr.Normal
+		elseif (AOT.EsTitan(objetivo) and parte > 0) then
 			-- Objetivo fijado: cada gancho a un lado de la parte del titán.
 			local punto = AOT.PuntoParte(objetivo, parte)
 			local separacion = objetivo:GetRight() * (lado == 1 and -1 or 1) * AOT.RadioParte(objetivo, parte) * 0.8
@@ -338,9 +391,9 @@ function SWEP:LanzarGanchos()
 			local ent = tr.Entity
 
 			if (IsValid(ent) and !ent:IsWorld()) then
-				local hueso = -1
+				local hueso = tr.AOT_Hueso or -1
 
-				if (tr.HitBox and ent.GetHitBoxBone) then
+				if (hueso < 0 and tr.HitBox and ent.GetHitBoxBone) then
 					local b = ent:GetHitBoxBone(tr.HitBox, (ent:GetHitboxSet()) or 0)
 					if (b) then hueso = b end
 				end
@@ -679,6 +732,12 @@ if (SERVER) then
 		end
 
 		if (mejor) then
+			-- Salvo que apuntes con precisión a otra parte, se fija la nuca.
+			local punto = AOT.PuntoParte(mejor, mejorParte)
+			if ((punto - eye):GetNormalized():Dot(aim) < 0.985 or mejorParte == AOT.PARTE.CUERPO) then
+				mejorParte = AOT.PARTE.NUCA
+			end
+
 			self:SetObjetivo(mejor)
 			self:SetParteObjetivo(mejorParte)
 			owner:EmitSound(SND_FIJAR, 50, 120)

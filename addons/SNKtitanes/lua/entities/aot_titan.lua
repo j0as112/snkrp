@@ -48,6 +48,9 @@ function ENT:SetupDataTables()
 	self:NetworkVar("Float", 3, "RegenBrazoD")
 	self:NetworkVar("Float", 4, "RegenTendonI")
 	self:NetworkVar("Float", 5, "RegenTendonD")
+	self:NetworkVar("Float", 6, "DurBrazoI")
+	self:NetworkVar("Float", 7, "DurBrazoD")
+	self:NetworkVar("Float", 8, "CicloDerribo")
 
 	self:NetworkVar("Bool", 0, "Muerto")
 	self:NetworkVar("Bool", 1, "Derribado")
@@ -57,6 +60,51 @@ end
 
 function ENT:Ciego()
 	return self:GetCegadoHasta() > CurTime()
+end
+
+-- Huesos que cuelgan de uno (él incluido): el brazo desde el codo hasta los dedos.
+function ENT:Rama(nombre)
+	if (self.AOT_RamasModelo != self:GetModel()) then
+		self.AOT_Ramas = {}
+		self.AOT_RamasModelo = self:GetModel()
+	end
+
+	if (self.AOT_Ramas[nombre]) then return self.AOT_Ramas[nombre] end
+
+	local raiz = AOT.Hueso(self, nombre)
+	local lista = {}
+
+	if (raiz) then
+		for b = 0, self:GetBoneCount() - 1 do
+			local actual = b
+
+			while (actual and actual >= 0) do
+				if (actual == raiz) then
+					lista[#lista + 1] = b
+					break
+				end
+
+				actual = self:GetBoneParent(actual)
+			end
+		end
+	end
+
+	self.AOT_Ramas[nombre] = lista
+	return lista
+end
+
+-- Tamaño del brazo de un lado: 1 entero, 0 recién cortado. Tras el corte solo hay muñón y vapor;
+-- luego el brazo vuelve a crecer desde el codo poco a poco.
+function ENT:FactorBrazo(lado)
+	local fin = lado == 1 and self:GetRegenBrazoI() or self:GetRegenBrazoD()
+	local ahora = CurTime()
+	if (fin <= ahora) then return 1 end
+
+	local dur = math.max(lado == 1 and self:GetDurBrazoI() or self:GetDurBrazoD(), 1)
+	local f = math.Clamp(1 - (fin - ahora) / dur, 0, 1)
+	f = math.Clamp((f - 0.3) / 0.7, 0, 1)
+
+	return f * f * (3 - 2 * f)
 end
 
 -- Los jugadores atraviesan a los titanes (si no, quedan atrapados dentro de su caja); el resto colisiona normal.
@@ -106,6 +154,10 @@ if (SERVER) then
 		local ancho = math.Clamp(5 * escala, 16, 48)
 		self:SetCollisionBounds(Vector(-ancho, -ancho, 0), Vector(ancho, ancho, math.Clamp(70 * escala, 72, 200)))
 
+		-- La caja de colisión es baja a propósito (para navegar), pero los trazos (ganchos, balas en
+		-- los ojos) tienen que poder tocar todo el cuerpo, hasta la cabeza.
+		self:SetSurroundingBounds(Vector(-30, -30, 0) * escala, Vector(30, 30, 80) * escala)
+
 		-- Un titán no salta: la altura de salto es igual a la de paso, así que el navegador nunca salta.
 		local paso = math.Clamp(14 * escala, 24, 120)
 		self.loco:SetStepHeight(paso)
@@ -113,7 +165,7 @@ if (SERVER) then
 
 		self.AOT_VidaBrazoMax = 50 + 6 * escala
 		self.AOT_VidaTendonMax = 40 + 5 * escala
-		self.AOT_NucaMax = 45 + 8 * escala
+		self.AOT_NucaMax = 35 + 4 * escala
 
 		self.AOT_VidaBrazo = {self.AOT_VidaBrazoMax, self.AOT_VidaBrazoMax}
 		self.AOT_VidaTendon = {self.AOT_VidaTendonMax, self.AOT_VidaTendonMax}
@@ -789,23 +841,28 @@ if (SERVER) then
 
 		if (parte == P.NUCA) then
 			-- La nuca solo cuenta si el corte llega desde atrás o desde arriba.
+			-- Solo se rechaza el corte si llega claramente de frente y desde abajo (la garganta).
+			-- Tumbado, la nuca queda expuesta desde cualquier lado.
 			local nuca = AOT.PuntoParte(self, P.NUCA)
 			local desde = (atacante:GetShootPos() - nuca):GetNormalized()
 
-			if (desde:Dot(-self:GetForward()) < -0.15 and atacante:GetShootPos().z < nuca.z) then
+			if (!self:GetDerribado() and desde:Dot(self:GetForward()) > 0.55 and atacante:GetShootPos().z < nuca.z) then
 				AOT.Marcador(atacante, "Garganta: ¡la nuca está por detrás!", Color(255, 200, 120))
 				return
 			end
 
-			self.AOT_NucaVida = self.AOT_NucaVida - dano
-			self.AOT_NucaRegen = CurTime() + 6
+			-- Un buen tajo (con algo de velocidad, o con el titán derribado) mata de un golpe.
+			if (self:GetDerribado()) then dano = dano * 2 end
 
-			if (self.AOT_NucaVida <= 0 or dano >= self.AOT_NucaMax) then
+			self.AOT_NucaVida = self.AOT_NucaVida - dano
+			self.AOT_NucaRegen = CurTime() + 10
+
+			if (self.AOT_NucaVida <= 0 or dano >= self.AOT_NucaMax * 0.5) then
 				AOT.Marcador(atacante, "¡NUCA!", Color(255, 60, 60))
 				self:Morir(atacante)
 			else
 				local pct = math.Round(100 * (1 - self.AOT_NucaVida / self.AOT_NucaMax))
-				AOT.Marcador(atacante, "Nuca " .. pct .. "%: ¡necesitas más velocidad!", Color(255, 170, 60))
+				AOT.Marcador(atacante, "Nuca " .. pct .. "%: ¡otro tajo!", Color(255, 170, 60))
 			end
 		elseif (parte == P.OJOS) then
 			self:Cegar(AOT.Config("aotRegenOjos", 12))
@@ -835,47 +892,13 @@ if (SERVER) then
 		end
 	end
 
-	-- Escala a la vez todos los huesos que cuelgan de uno (para ocultar un brazo cortado).
-	function ENT:Rama(nombre)
-		self.AOT_Ramas = self.AOT_Ramas or {}
-		if (self.AOT_Ramas[nombre]) then return self.AOT_Ramas[nombre] end
-
-		local raiz = AOT.Hueso(self, nombre)
-		local lista = {}
-
-		if (raiz) then
-			for b = 0, self:GetBoneCount() - 1 do
-				local actual = b
-
-				while (actual and actual >= 0) do
-					if (actual == raiz) then
-						lista[#lista + 1] = b
-						break
-					end
-
-					actual = self:GetBoneParent(actual)
-				end
-			end
-		end
-
-		self.AOT_Ramas[nombre] = lista
-		return lista
-	end
-
-	function ENT:EscalarRama(nombre, e)
-		local v = Vector(e, e, e)
-		for _, b in ipairs(self:Rama(nombre)) do
-			self:ManipulateBoneScale(b, v)
-		end
-	end
-
 	function ENT:Amputar(lado, atacante)
 		local dur = AOT.Config("aotRegenBrazo", 30)
 		local campo = lado == 1 and "RegenBrazoI" or "RegenBrazoD"
 
 		self["Set" .. campo](self, CurTime() + dur)
 		self.AOT_RegenDur[campo] = dur
-		self:EscalarRama(lado == 1 and H.ANTEBRAZO_I or H.ANTEBRAZO_D, 0.01)
+		if (lado == 1) then self:SetDurBrazoI(dur) else self:SetDurBrazoD(dur) end
 
 		local corte = AOT.PosHueso(self, lado == 1 and H.ANTEBRAZO_I or H.ANTEBRAZO_D)
 		self:Sangrar(corte, 150)
@@ -917,8 +940,16 @@ if (SERVER) then
 		end
 	end
 
+	-- Derribado: cae con "titan_dying" y se queda tumbado hasta regenerar un tendón. El ciclo
+	-- va también por red (CicloDerribo) y el cliente lo impone al dibujar: si no, el cliente
+	-- volvía a mostrarlo de pie en cuanto terminaba la caída.
+	function ENT:FijarCicloDerribo(ciclo)
+		self:SetCycle(ciclo)
+		self:SetCicloDerribo(ciclo)
+	end
+
 	function ENT:EstadoDerribado()
-		local CAIDA = 0.7
+		local CAIDA = 0.8
 		local escala = self:GetEscala()
 
 		self.loco:SetDesiredSpeed(0)
@@ -932,25 +963,30 @@ if (SERVER) then
 		self:SetPlaybackRate(0)
 
 		local inicio = CurTime()
-		while (CurTime() - inicio < 1.4) do
-			self:SetCycle(CAIDA * (CurTime() - inicio) / 1.4)
+		local tCaida = 1.8
+		while (CurTime() - inicio < tCaida) do
+			if (self:GetMuerto()) then return end
+			local f = (CurTime() - inicio) / tCaida
+			self:FijarCicloDerribo(CAIDA * f * f)
 			coroutine.yield()
 		end
 
-		self:SetCycle(CAIDA)
+		self:FijarCicloDerribo(CAIDA)
 		util.ScreenShake(self:GetPos(), 8, 5, 1, 300 * escala)
 		self:EmitSound("physics/concrete/boulder_impact_hard" .. math.random(1, 4) .. ".wav", 110, 50)
 
 		-- En el suelo hasta que regenere al menos un tendón.
 		while (AOT.ParteCortada(self, P.TENDON_I) and AOT.ParteCortada(self, P.TENDON_D)) do
 			if (self:GetMuerto()) then return end
-			coroutine.wait(0.3)
+			if (self:GetSequence() != seq) then self:ResetSequence(seq) end
+			self:FijarCicloDerribo(CAIDA)
+			coroutine.wait(0.2)
 		end
 
 		inicio = CurTime()
-		while (CurTime() - inicio < 2) do
+		while (CurTime() - inicio < 2.5) do
 			if (self:GetMuerto()) then return end
-			self:SetCycle(CAIDA * (1 - (CurTime() - inicio) / 2))
+			self:FijarCicloDerribo(CAIDA * (1 - (CurTime() - inicio) / 2.5))
 			coroutine.yield()
 		end
 
@@ -968,18 +1004,10 @@ if (SERVER) then
 		for lado = 1, 2 do
 			local campo = lado == 1 and "RegenBrazoI" or "RegenBrazoD"
 			local fin = self["Get" .. campo](self)
-			local raiz = lado == 1 and H.ANTEBRAZO_I or H.ANTEBRAZO_D
-
-			if (fin > 0) then
-				if (ahora >= fin) then
-					self["Set" .. campo](self, 0)
-					self:EscalarRama(raiz, 1)
-					self.AOT_VidaBrazo[lado] = self.AOT_VidaBrazoMax
-				else
-					local dur = self.AOT_RegenDur[campo] or 30
-					local f = 1 - (fin - ahora) / dur
-					self:EscalarRama(raiz, f < 0.25 and 0.01 or math.Clamp((f - 0.25) / 0.75, 0.01, 1))
-				end
+			-- El brazo se oculta y vuelve a crecer en el cliente (ver BuildBonePositions).
+			if (fin > 0 and ahora >= fin) then
+				self["Set" .. campo](self, 0)
+				self.AOT_VidaBrazo[lado] = self.AOT_VidaBrazoMax
 			end
 
 			local campoT = lado == 1 and "RegenTendonI" or "RegenTendonD"
@@ -1175,56 +1203,121 @@ else
 	-- ============================================================
 	local HUESOS_VAPOR = {H.CUELLO, H.PECHO, H.CADERA, H.BRAZO_I, H.BRAZO_D, H.PIERNA_I, H.PIERNA_D, H.CABEZA}
 	local MAT_VAPOR = "particle/particle_smokegrenade"
+	local ANTEBRAZO = {H.ANTEBRAZO_I, H.ANTEBRAZO_D}
+	local MANO = {H.MANO_I, H.MANO_D}
 
-	function ENT:Vapor(pos, intensidad)
+	function ENT:Vapor(pos, intensidad, tam)
 		local emisor = self.AOT_Emisor
 		if (!emisor) then return end
 
 		local escala = self:GetEscala()
-		local p = emisor:Add(MAT_VAPOR, pos + VectorRand() * escala)
+		tam = tam or 1
+
+		local p = emisor:Add(MAT_VAPOR, pos + VectorRand() * 2 * escala * tam)
 
 		if (p) then
-			p:SetVelocity(VectorRand() * 15 * escala + Vector(0, 0, 25 * escala))
-			p:SetDieTime(math.Rand(1, 2.2))
-			p:SetStartAlpha(110 * intensidad)
+			p:SetVelocity(VectorRand() * 12 * escala + Vector(0, 0, 22 * escala))
+			p:SetDieTime(math.Rand(1.4, 2.8))
+			p:SetStartAlpha(math.min(255, 170 * intensidad))
 			p:SetEndAlpha(0)
-			p:SetStartSize(3 * escala)
-			p:SetEndSize(12 * escala)
-			p:SetColor(235, 235, 235)
+			p:SetStartSize(5 * escala * tam)
+			p:SetEndSize(17 * escala * tam)
+			p:SetColor(240, 240, 240)
 			p:SetRoll(math.Rand(0, 360))
 			p:SetRollDelta(math.Rand(-1, 1))
-			p:SetAirResistance(60)
+			p:SetAirResistance(70)
+		end
+	end
+
+	-- Brazo regenerándose: una nube densa envuelve el muñón y lo que va creciendo, para que no se
+	-- vea un corte limpio ni un brazo a medias.
+	function ENT:VaporBrazo(lado)
+		local codo = AOT.PosHueso(self, ANTEBRAZO[lado])
+		local f = self:FactorBrazo(lado)
+		local punta = LerpVector(math.max(f, 0.15), codo, AOT.PosHueso(self, MANO[lado]))
+
+		for _ = 1, 4 do
+			self:Vapor(LerpVector(math.random(), codo, punta), 1.2, 1.2)
 		end
 	end
 
 	function ENT:Think()
 		if (CurTime() < (self.AOT_SigFx or 0)) then return end
-		self.AOT_SigFx = CurTime() + 0.08
+		self.AOT_SigFx = CurTime() + 0.05
 
 		if (self:GetPos():DistToSqr(EyePos()) > 9000 * 9000) then return end
 
 		self.AOT_Emisor = self.AOT_Emisor or ParticleEmitter(self:GetPos())
+		self.AOT_Emisor:SetPos(self:GetPos())
 
 		if (self:GetMuerto()) then
-			for _ = 1, 3 do
-				self:Vapor(AOT.PosHueso(self, HUESOS_VAPOR[math.random(#HUESOS_VAPOR)]), 1)
+			for _ = 1, 6 do
+				self:Vapor(AOT.PosHueso(self, HUESOS_VAPOR[math.random(#HUESOS_VAPOR)]), 1.2, 1.3)
 			end
 			return
 		end
 
 		local ahora = CurTime()
-		if (self:GetRegenBrazoI() > ahora) then self:Vapor(AOT.PosHueso(self, H.ANTEBRAZO_I), 0.8) end
-		if (self:GetRegenBrazoD() > ahora) then self:Vapor(AOT.PosHueso(self, H.ANTEBRAZO_D), 0.8) end
-		if (self:GetRegenTendonI() > ahora) then self:Vapor(AOT.PuntoParte(self, P.TENDON_I), 0.6) end
-		if (self:GetRegenTendonD() > ahora) then self:Vapor(AOT.PuntoParte(self, P.TENDON_D), 0.6) end
-		if (self:Ciego()) then self:Vapor(AOT.PuntoParte(self, P.OJOS), 0.5) end
+		if (self:GetRegenBrazoI() > ahora) then self:VaporBrazo(1) end
+		if (self:GetRegenBrazoD() > ahora) then self:VaporBrazo(2) end
+
+		for _ = 1, 3 do
+			if (self:GetRegenTendonI() > ahora) then self:Vapor(AOT.PuntoParte(self, P.TENDON_I), 1, 0.9) end
+			if (self:GetRegenTendonD() > ahora) then self:Vapor(AOT.PuntoParte(self, P.TENDON_D), 1, 0.9) end
+		end
+
+		if (self:Ciego()) then
+			for _ = 1, 2 do self:Vapor(AOT.PuntoParte(self, P.OJOS), 0.9, 0.7) end
+		end
+	end
+
+	-- Brazo cortado: todos los huesos del codo hacia abajo se encogen hacia el codo (factor f).
+	-- Con f = 0 no queda nada; al regenerar, el brazo vuelve a crecer entero, no "fino".
+	local function EncogerBrazos(self)
+		for lado = 1, 2 do
+			local f = self:FactorBrazo(lado)
+
+			if (f < 1) then
+				local raiz = AOT.Hueso(self, ANTEBRAZO[lado])
+				local mRaiz = raiz and self:GetBoneMatrix(raiz)
+
+				if (mRaiz) then
+					local base = mRaiz:GetTranslation()
+					local e = math.max(f, 0.001)
+					local escala = Vector(e, e, e)
+
+					for _, b in ipairs(self:Rama(ANTEBRAZO[lado])) do
+						local m = self:GetBoneMatrix(b)
+
+						if (m) then
+							m:SetTranslation(base + (m:GetTranslation() - base) * e)
+							m:Scale(escala)
+							self:SetBoneMatrix(b, m)
+						end
+					end
+				end
+			end
+		end
 	end
 
 	function ENT:Initialize()
 		self:SetCustomCollisionCheck(true)
+		self:AddCallback("BuildBonePositions", EncogerBrazos)
 	end
 
 	function ENT:Draw()
+		-- Tumbado: se impone la pose que manda el servidor (el cliente si no lo mostraba de pie).
+		if (self:GetDerribado() and !self:GetMuerto()) then
+			local seq = self:LookupSequence("titan_dying")
+
+			if (seq and seq >= 0) then
+				if (self:GetSequence() != seq) then self:SetSequence(seq) end
+				self:SetPlaybackRate(0)
+				self:SetCycle(self:GetCicloDerribo())
+				self:InvalidateBoneCache()
+			end
+		end
+
 		self:DrawModel()
 	end
 

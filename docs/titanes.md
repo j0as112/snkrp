@@ -14,6 +14,10 @@ depende: [SNKarmas]
 - **Alcance**: el titan mide 5-9 veces al jugador; medir en 3D desde el pecho deja fuera a quien esta a sus pies. Se mide en horizontal (`EnAlcance`/`DistPlano`).
 - **Colision con jugadores**: si el jugador queda dentro de la caja del titan, se bugea. Los jugadores atraviesan titanes mediante el hook `ShouldCollide` (+ `SetCustomCollisionCheck`). **No cambiar el `CollisionGroup` del nextbot**: `DEBRIS_TRIGGER` y `PASSABLE_DOOR` lo hacen caer atravesando el suelo.
 - Altura de salto = altura de paso para que el navegador nunca salte.
+- **Brazo cortado**: no se usa `ManipulateBoneScale` (escalar huesos deja el brazo largo y "fino"). En el cliente, un callback `BuildBonePositions` encoge todos los huesos del antebrazo hacia el codo con el factor `FactorBrazo` (0 recien cortado, crece hasta 1 al regenerar). La duracion va en red (`DurBrazoI/D`). El vapor del brazo sale a lo largo del trozo que crece, para tapar el muñon.
+- **Derribo**: el cliente mostraba al titan de pie al acabar la caida. El servidor manda el ciclo en `CicloDerribo` y el cliente lo impone en `Draw` (secuencia `titan_dying`, ritmo 0) mientras `GetDerribado()`.
+- **Caja baja, trazos altos**: la caja de colision es baja para navegar; `SetSurroundingBounds` cubre todo el modelo para que ganchos y balas toquen cabeza y nuca.
+- **Nuca facil**: radio mayor, ayuda al tajo (cuenta pasar cerca con el cuerpo), gana siempre a otras partes, solo se rechaza de frente y desde abajo, y un tajo con algo de velocidad mata. Derribado, el daño a la nuca se duplica. El anclaje automatico clava los ganchos junto a la nuca (sujetos al hueso del cuello) si miras hacia un titan, y fijar un titan fija la nuca salvo que apuntes con precision a otra parte.
 - No usar caracteres no ASCII en nombres de funcion.
 
 ## Despliegue

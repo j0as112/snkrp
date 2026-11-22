@@ -83,6 +83,14 @@ function AOT.ResolverCorte(owner, wep, rapidez, giro)
 						dist, cercano = AOT.DistPuntoSegmento(punto, eye, fin)
 					end
 
+					-- Ayuda con la nuca: basta con pasar cerca de ella (el cuerpo del jugador cuenta,
+					-- no solo la línea del tajo). El titán decide luego si el ángulo vale.
+					if (parte == AOT.PARTE.NUCA) then
+						radio = radio * 1.6
+						local dCentro = punto:Distance(centro)
+						if (dCentro < dist) then dist, cercano = dCentro, punto end
+					end
+
 					-- Ayuda a apuntar si la parte está fijada.
 					if (ent == objetivoFijado and parte == wep:GetParteObjetivo()) then
 						radio = radio * 1.5
@@ -92,7 +100,8 @@ function AOT.ResolverCorte(owner, wep, rapidez, giro)
 
 					if (margen < 0) then
 						-- Las partes vitales tienen prioridad sobre el cuerpo.
-						local peso = (parte == AOT.PARTE.CUERPO) and 1000 or 0
+						-- La nuca gana siempre que el tajo la alcance.
+						local peso = (parte == AOT.PARTE.CUERPO) and 1000 or (parte == AOT.PARTE.NUCA and -1000 or 0)
 
 						if (!mejorMargen or margen + peso < mejorMargen) then
 							mejorTitan, mejorParte, mejorMargen, mejorPunto = ent, parte, margen + peso, cercano
