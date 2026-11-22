@@ -432,8 +432,7 @@ function PANEL:Paint(ancho, alto)
 		local alfa = b.apagado and 70 or (150 + 105 * f)
 		local color = b.peligro and Color(Lerp(f, 200, 235), Lerp(f, 200, 95), Lerp(f, 200, 95), alfa) or Color(240, 240, 238, alfa)
 
-		TextoEspaciado(string.format("%02d", i), "aotMenuPequeno", x, by + fila / 2 - ScreenScale(2.6), Color(120, 126, 130, b.apagado and 70 or 200), ScreenScale(1), 0)
-		TextoEspaciado(b.texto, "aotMenuBoton", x + ScreenScale(18) + f * ScreenScale(5), by + fila / 2 - ScreenScale(5.6), color, ScreenScale(2.2), 0)
+		TextoEspaciado(b.texto, "aotMenuBoton", x + f * ScreenScale(5), by + fila / 2 - ScreenScale(5.6), color, ScreenScale(2.2), 0)
 
 		if (f > 0.05) then
 			TextoEspaciado(">", "aotMenuBoton", x + anchoBoton - ScreenScale(8) - (1 - f) * ScreenScale(6), by + fila / 2 - ScreenScale(5.6), ColorAlpha(color, 255 * f), 0, 2)
