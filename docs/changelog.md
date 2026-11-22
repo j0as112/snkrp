@@ -8,7 +8,7 @@
   - Nuevo aspecto de Attack on Titan para los menus, fichas, barras e inventario.
   - Nueva pantalla de muerte.
   - Nueva pantalla de carga.
-  - Nuevo menu de personaje con el logo del servidor.
+  - Nuevo menu de bienvenida al conectar, con el logo del servidor y un fondo animado.
   - Nuevo aspecto del menu principal.
   - Nueva seleccion de personaje: tus personajes aparecen en una escena en 3D y se elige haciendo clic sobre ellos.
 - Titanes:

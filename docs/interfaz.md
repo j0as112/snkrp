@@ -11,11 +11,12 @@ Tema visual de Attack on Titan para Helix, replicando el metodo del servidor de 
 - El color base de Helix (`color`) por defecto es el verde (`schema/sh_config.lua`).
 - **Pantalla de carga**: `web/loading/index.html` (HTML autonomo, sin recursos externos). Es lo que carga `sv_loadingurl`.
 
-## Menu de personaje (`cl_personaje.lua`)
-- Rehace `ixCharMenuMain` (la pantalla al conectar: Crear / Cargar / Comunidad / Salir) con una **cabecera HTML** (franja oscura con filetes dorados, el logo de SNKRP y el lema; el logo se carga de `https://j0as112.github.io/snkrp/logo.jpg`, si no carga solo se ve el texto) y botones con barra dorada al pasar el raton.
-- Parchea el fondo de `ixCharMenu` (niebla verde, resplandor rojizo, muralla, vineta) y `ixMenuButton.PaintBackground`.
-- Mantiene el flujo de Helix: las pantallas de **crear** y **cargar** personaje son las de Helix con el skin AoT (a diferencia del menu de Naruto, que tiene su propia escena 3D de seleccion).
-- Menu F1: el skin cambia el fondo (`PaintMenuBackground`), las pestanas y botones seleccionados (`DrawImportantBackground`), las cabeceras de categoria y los botones.
+## Menu de bienvenida (`cl_menu_principal.lua`)
+Lo primero que se ve al conectar (Nuevo soldado / Continuar / Comunidad / Abandonar), hecho como el de Naruto: una **pagina HTML a pantalla completa** (DHTML) con escena de fondo (cielo de tormenta, sol bajo, muralla, niebla y ceniza flotando en un canvas) y un **panel de cristal** con el logo de SNKRP, el titulo, el lema y botones con barra dorada animada. Lua solo conecta los botones: `gmod.Trigger('new'|'load'|'community'|'exit')` y `gmod.Hover()` (sonido).
+- Sustituye a `ixCharMenuMain` y mantiene el contrato con Helix: `Dim/Undim`, `loadButton:SetDisabled` (compat), `UpdateReturnButton` y `bUsingCharacter` ("Abandonar" si no hay personaje activo, "Volver al juego" si lo hay).
+- "Continuar" se desactiva si no hay personajes. "Comunidad" solo sale si `communityURL` esta configurado.
+- El logo se carga de `https://j0as112.github.io/snkrp/logo.jpg`; si falla, solo se ve el texto.
+- `cl_personaje.lua` queda para el fondo del contenedor y el estilo de `ixMenuButton`.
 
 ## Seleccion de personaje con escena 3D (`cl_seleccion.lua`, `sv_seleccion.lua`)
 Sustituye a `ixCharMenuLoad` de Helix siguiendo la seleccion de Naruto: los personajes de la cuenta salen de pie delante de una camara, 3 por pagina; el raton resalta, clic elige, la X del rotulo borra (con confirmacion) y las flechas pasan de pagina.
