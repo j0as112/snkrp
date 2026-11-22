@@ -133,31 +133,24 @@ function PANEL:Init()
 	self.ultimo = RealTime()
 
 	ix.aotUI.panelSeleccion = self
+end
 
-	self.volver = self:Add("ixMenuButton")
-	self.volver:SetText("return")
-	self.volver:SizeToContents()
-	self.volver:SetPos(padding, ScrH() - self.volver:GetTall() - padding)
-	-- Siempre hay una salida clara: "Continuar" elige el personaje resaltado (o el primero de la pagina).
-	self.continuar = self:Add("ixMenuButton")
-	self.continuar:SetText("choose")
-	self.continuar:SizeToContents()
-	self.continuar:SetPos(ScrW() - self.continuar:GetWide() - padding, ScrH() - self.continuar:GetTall() - padding)
-	self.continuar.DoClick = function()
-		local fig = self.hover or self.figuras[1]
+function PANEL:Volver()
+	local menu = self:GetParent()
 
-		if (fig) then self:Elegir(fig.id) end
+	surface.PlaySound("helix/ui/press.wav")
+	self:SlideDown()
+
+	if (IsValid(menu) and IsValid(menu.mainPanel)) then
+		menu.mainPanel:Undim()
 	end
+end
 
-	self.volver.DoClick = function()
-		local menu = self:GetParent()
+-- "Elegir" toma el personaje resaltado o, si no hay, el primero de la pagina.
+function PANEL:ElegirActual()
+	local fig = self.hover or self.figuras[1]
 
-		self:SlideDown()
-
-		if (IsValid(menu) and IsValid(menu.mainPanel)) then
-			menu.mainPanel:Undim()
-		end
-	end
+	if (fig) then self:Elegir(fig.id) end
 end
 
 -- Salida de emergencia: Esc vuelve al menu.
@@ -166,8 +159,8 @@ function PANEL:Think()
 
 	local esc = input.IsKeyDown(KEY_ESCAPE)
 
-	if (esc and !self.escAntes and IsValid(self.volver)) then
-		self.volver:DoClick()
+	if (esc and !self.escAntes) then
+		self:Volver()
 	end
 
 	self.escAntes = esc
@@ -372,15 +365,69 @@ function PANEL:OnMousePressed(codigo)
 	end
 end
 
+-- Degradado vertical por bandas (no depende de texturas del motor).
+local function Degradado(x, y, w, h, c1, c2, pasos)
+	pasos = pasos or 40
+
+	for i = 0, pasos - 1 do
+		local f = i / (pasos - 1)
+
+		surface.SetDrawColor(Lerp(f, c1.r, c2.r), Lerp(f, c1.g, c2.g), Lerp(f, c1.b, c2.b), 255)
+		surface.DrawRect(x, y + h * i / pasos, w, math.ceil(h / pasos) + 1)
+	end
+end
+
 -- Luz de estudio: clave calida desde delante-arriba, contraluz azul detras.
 local function Luz(mundo)
 	render.SuppressEngineLighting(true)
-	render.SetModelLighting(BOX_FRONT, 1.15, 1.0, 0.85)
-	render.SetModelLighting(BOX_TOP, 0.9, 0.88, 0.8)
-	render.SetModelLighting(BOX_LEFT, 0.4, 0.45, 0.5)
-	render.SetModelLighting(BOX_RIGHT, 0.25, 0.35, 0.6)
-	render.SetModelLighting(BOX_BACK, mundo and 0.3 or 0.25, mundo and 0.35 or 0.4, mundo and 0.45 or 0.7)
-	render.SetModelLighting(BOX_BOTTOM, 0.12, 0.12, 0.12)
+	render.SetModelLighting(BOX_FRONT, 1.7, 1.5, 1.25)
+	render.SetModelLighting(BOX_TOP, 1.2, 1.15, 1.05)
+	render.SetModelLighting(BOX_LEFT, 0.7, 0.75, 0.8)
+	render.SetModelLighting(BOX_RIGHT, 0.45, 0.6, 0.9)
+	render.SetModelLighting(BOX_BACK, 0.5, 0.65, 0.9)
+	render.SetModelLighting(BOX_BOTTOM, 0.3, 0.3, 0.3)
+end
+
+-- Fondo del diorama de estudio: cielo de tormenta con resplandor, muralla y suelo.
+local function FondoEstudio(w, h)
+	local horizonte = h * 0.58
+
+	-- cielo: verde azulado oscuro arriba, ocre rojizo cerca del horizonte
+	Degradado(0, 0, w, horizonte, Color(26, 40, 38), Color(138, 82, 52), 48)
+
+	-- sol bajo detras de la muralla
+	draw.NoTexture()
+
+	for r = 6, 1, -1 do
+		surface.SetDrawColor(255, 170, 90, 9)
+		surface.DrawTexturedRectRotated(w * 0.5, horizonte - h * 0.03, w * 0.16 * r, h * 0.16 * r, 0)
+	end
+
+	-- muralla: franja con juntas de bloques
+	local alto = h * 0.12
+
+	surface.SetDrawColor(52, 58, 56, 255)
+	surface.DrawRect(0, horizonte - alto, w, alto)
+
+	surface.SetDrawColor(30, 34, 33, 255)
+
+	for fila = 1, 3 do
+		surface.DrawRect(0, horizonte - alto + alto * fila / 4, w, 2)
+	end
+
+	for col = 0, math.ceil(w / 110) do
+		surface.DrawRect(col * 110 + ((col % 2) * 55), horizonte - alto, 2, alto)
+	end
+
+	surface.SetDrawColor(120, 124, 120, 200)
+	surface.DrawRect(0, horizonte - alto, w, 3)
+
+	-- suelo
+	Degradado(0, horizonte, w, h - horizonte, Color(34, 44, 38), Color(12, 16, 14), 36)
+
+	-- niebla baja
+	surface.SetDrawColor(190, 200, 190, 18)
+	surface.DrawRect(0, horizonte - 6, w, h * 0.08)
 end
 
 function PANEL:Paint(w, h)
@@ -393,24 +440,13 @@ function PANEL:Paint(w, h)
 	local vista, _, _, mundo = self:Vista()
 
 	if (!mundo) then
-		-- diorama de estudio: cielo de tormenta con resplandor rojizo y muralla lejana
-		surface.SetDrawColor(UI.verdeOsc.r + 6, UI.verdeOsc.g + 10, UI.verdeOsc.b + 8, 255)
-		surface.DrawRect(0, 0, w, h)
-
-		surface.SetDrawColor(UI.sangre.r, UI.sangre.g, UI.sangre.b, 70)
-		surface.SetTexture(gradienteArriba)
-		surface.DrawTexturedRect(0, h * 0.45, w, h * 0.55)
-
-		surface.SetDrawColor(10, 14, 12, 230)
-		surface.DrawRect(0, h * 0.6, w, h * 0.4)
-		surface.SetDrawColor(UI.acero.r, UI.acero.g, UI.acero.b, 45)
-		surface.DrawRect(0, h * 0.6, w, 2)
+		FondoEstudio(w, h)
 	else
-		-- sobre el mundo real: solo un velo oscuro en los bordes
-		surface.SetDrawColor(0, 0, 0, 120)
+		-- sobre el mundo real: solo un velo oscuro arriba y abajo
+		surface.SetDrawColor(0, 0, 0, 110)
 		surface.SetTexture(gradienteAbajo)
 		surface.DrawTexturedRect(0, 0, w, h * 0.2)
-		surface.SetDrawColor(0, 0, 0, 140)
+		surface.SetDrawColor(0, 0, 0, 130)
 		surface.SetTexture(gradienteArriba)
 		surface.DrawTexturedRect(0, h * 0.8, w, h * 0.2)
 	end
@@ -425,19 +461,19 @@ function PANEL:Paint(w, h)
 		render.ClearDepth()
 		Luz(mundo)
 
+		-- sombra de contacto bajo cada personaje
 		if (!mundo) then
 			render.SetColorMaterial()
-			render.DrawQuadEasy(Vector(ESTUDIO.dist, 0, -0.5), Vector(0, 0, 1), 1400, 1400, Color(12, 18, 15, 255), 0)
 
 			for _, fig in ipairs(self.figuras) do
-				render.DrawQuadEasy(fig.pos + Vector(0, 0, 0.2), Vector(0, 0, 1), 80, 80, Color(46, 62, 52, 80), 0)
+				render.DrawQuadEasy(fig.pos + Vector(0, 0, 0.3), Vector(0, 0, 1), 60, 60, Color(0, 0, 0, 120), 0)
 			end
 		end
 
 		for _, fig in ipairs(self.figuras) do
 			if (IsValid(fig.ent)) then
 				local hover = self.hover == fig
-				local b = hover and 1 or 0.78
+				local b = hover and 1 or 0.82
 
 				fig.ent:FrameAdvance(dt * 0.5)
 				fig.ent:SetIK(false)
@@ -446,7 +482,7 @@ function PANEL:Paint(w, h)
 				fig.ent:DrawModel()
 
 				-- zona del raton: pies y cabeza proyectados
-				local pie = (fig.pos + Vector(0, 0, 0)):ToScreen()
+				local pie = fig.pos:ToScreen()
 				local cabeza = (fig.pos + Vector(0, 0, fig.alto)):ToScreen()
 
 				fig.sx = pie.x
@@ -468,6 +504,11 @@ function PANEL:Paint(w, h)
 
 	self.hover = masCercano
 
+	-- vineta superior
+	surface.SetDrawColor(0, 0, 0, 120)
+	surface.SetTexture(gradienteAbajo)
+	surface.DrawTexturedRect(0, 0, w, h * 0.15)
+
 	-- rotulos
 	for _, fig in ipairs(self.figuras) do
 		if (fig.sx) then self:Rotulo(fig, self.hover == fig) end
@@ -482,7 +523,7 @@ function PANEL:Paint(w, h)
 			local x = w / 2 + lado * ScreenScale(50) - t / 2
 			local activo = (lado == -1 and self.page > 1) or (lado == 1 and self.page < self:TotalPaginas())
 
-			surface.SetDrawColor(UI.verdeOsc.r, UI.verdeOsc.g, UI.verdeOsc.b, 200)
+			surface.SetDrawColor(UI.verdeOsc.r, UI.verdeOsc.g, UI.verdeOsc.b, 220)
 			surface.DrawRect(x, y, t, t)
 			surface.SetDrawColor(UI.oro.r, UI.oro.g, UI.oro.b, activo and 220 or 70)
 			surface.DrawOutlinedRect(x, y, t, t)
@@ -495,9 +536,30 @@ function PANEL:Paint(w, h)
 	end
 
 	-- titulo
-	draw.SimpleText("ELIGE A TU SOLDADO", "aotSubtitulo", w / 2, ScreenScale(18), UI.pergamino, TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
-	surface.SetDrawColor(UI.oro.r, UI.oro.g, UI.oro.b, 140)
+	draw.SimpleTextOutlined("ELIGE A TU SOLDADO", "aotSubtitulo", w / 2, ScreenScale(18), UI.pergamino, TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER, 1, Color(0, 0, 0, 200))
+	surface.SetDrawColor(UI.oro.r, UI.oro.g, UI.oro.b, 200)
 	surface.DrawRect(w / 2 - ScreenScale(50), ScreenScale(28), ScreenScale(100), 2)
+
+	-- botones propios (siempre visibles): Volver y Elegir
+	local bw, bh, pad = ScreenScale(70), ScreenScale(16), ScreenScale(16)
+
+	self:BotonPropio("VOLVER", pad, h - bh - pad, bw, bh, function() self:Volver() end)
+	self:BotonPropio("ELEGIR", w - bw - pad, h - bh - pad, bw, bh, function() self:ElegirActual() end, true)
+end
+
+function PANEL:BotonPropio(texto, x, y, w, h, fn, principal)
+	local mx, my = self:CursorPos()
+	local encima = mx >= x and mx <= x + w and my >= y and my <= y + h
+
+	surface.SetDrawColor(UI.verde.r, UI.verde.g, UI.verde.b, encima and 235 or 170)
+	surface.DrawRect(x, y, w, h)
+
+	surface.SetDrawColor(UI.oro.r, UI.oro.g, UI.oro.b, encima and 255 or (principal and 200 or 110))
+	surface.DrawOutlinedRect(x, y, w, h, 2)
+
+	draw.SimpleText(texto, "ixMenuButtonFont", x + w / 2, y + h / 2, encima and color_white or UI.pergamino, TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
+
+	self:AnadirBoton(x, y, w, h, fn)
 end
 
 function PANEL:Rotulo(fig, resaltado)
