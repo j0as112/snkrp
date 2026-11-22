@@ -90,7 +90,7 @@ function RANURA:Paint(w, h)
 	end
 
 	if (!activo) then
-		UI.TextoEspaciado(self.texto, "aotMenuPequeno", w / 2, h / 2 - ScreenScale(2.6), Color(130, 136, 140, 140), ScreenScale(1.2), 1)
+		draw.SimpleText(string.lower(self.texto), "aotSerifPeq", w / 2, h / 2, Color(200, 188, 160, 120), TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
 	end
 
 	-- aviso al arrastrar un objeto compatible
@@ -259,13 +259,31 @@ function ESCENARIO:Refrescar()
 	end
 end
 
-function ESCENARIO:Paint(w, h)
-	-- plataforma bajo el personaje
-	surface.SetDrawColor(UI.oro.r, UI.oro.g, UI.oro.b, 40)
-	surface.DrawRect(w / 2 - w * 0.2, h * 0.93, w * 0.4, 1)
+local HALO = Material("sprites/light_glow02_add")
 
-	UI.TextoEspaciado("EQUIPO", "aotMenuPequeno", ScreenScale(2), ScreenScale(1), Color(150, 156, 160), ScreenScale(1.6), 0)
-	UI.TextoEspaciado("ARRASTRA PARA GIRAR", "aotMenuPequeno", w / 2, h - ScreenScale(8), Color(110, 116, 120, 160), ScreenScale(1.2), 1)
+function ESCENARIO:Paint(w, h)
+	-- emblema del servidor, grande y muy tenue, como marca de agua
+	local logo = UI.Logo()
+
+	if (logo) then
+		local ls = h * 0.78
+
+		surface.SetDrawColor(255, 255, 255, 13)
+		surface.SetMaterial(logo)
+		surface.DrawTexturedRect(w / 2 - ls / 2, h * 0.1, ls, ls)
+	end
+
+	-- halo calido detras del personaje
+	surface.SetMaterial(HALO)
+	surface.SetDrawColor(255, 196, 130, 70)
+	surface.DrawTexturedRect(w / 2 - h * 0.45, h * 0.1, h * 0.9, h * 0.9)
+
+	-- suelo: elipse suave bajo los pies
+	surface.SetDrawColor(255, 200, 140, 18)
+	surface.DrawTexturedRect(w / 2 - w * 0.22, h * 0.84, w * 0.44, h * 0.14)
+
+	draw.SimpleText("Equipo", "aotSerif", ScreenScale(2), ScreenScale(1), Color(236, 224, 196), TEXT_ALIGN_LEFT, TEXT_ALIGN_TOP)
+	draw.SimpleText("arrastra para girar", "aotSerifPeq", w / 2, h - ScreenScale(9), Color(200, 188, 160, 110), TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
 end
 
 vgui.Register("aotEscenario", ESCENARIO, "DPanel")
@@ -293,10 +311,7 @@ hook.Add("CreateMenuButtons", "ixInventory", function(tabs)
 			derecha:DockMargin(ScreenScale(8), 0, 0, 0)
 
 			function derecha:Paint(w, h)
-				UI.TextoEspaciado("INVENTARIO", "aotMenuPequeno", ScreenScale(2), ScreenScale(1), Color(150, 156, 160), ScreenScale(1.6), 0)
-
-				surface.SetDrawColor(UI.oro.r, UI.oro.g, UI.oro.b, 90)
-				surface.DrawRect(0, ScreenScale(11), ScreenScale(14), 2)
+				draw.SimpleText("Mochila", "aotSerif", ScreenScale(2), ScreenScale(1), Color(236, 224, 196), TEXT_ALIGN_LEFT, TEXT_ALIGN_TOP)
 			end
 
 			local lienzo = derecha:Add("DTileLayout")

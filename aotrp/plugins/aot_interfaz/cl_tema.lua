@@ -20,6 +20,8 @@ ix.config.SetDefault("color", UI.verde)
 local FUENTE_TITULO = "Georgia"
 
 surface.CreateFont("aotTitulo", {font = FUENTE_TITULO, size = ScreenScale(22), weight = 800, extended = true})
+surface.CreateFont("aotSerif", {font = "Georgia", size = ScreenScale(11), weight = 400, italic = true, extended = true})
+surface.CreateFont("aotSerifPeq", {font = "Georgia", size = ScreenScale(6.8), weight = 400, italic = true, extended = true})
 surface.CreateFont("aotSubtitulo", {font = FUENTE_TITULO, size = ScreenScale(9), weight = 500, italic = true, extended = true})
 
 -- Esquinas en "L": da el aire de plancha militar a los paneles.

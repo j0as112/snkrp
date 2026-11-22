@@ -45,7 +45,7 @@ function SKIN:PaintFrame(panel)
 	local w, h = panel:GetWide(), panel:GetTall()
 
 	-- panel redondeado, translucido y sin borde marcado (estilo moderno)
-	draw.RoundedBox(8, 0, 0, w, h, Color(8, 11, 10, 205))
+	draw.RoundedBox(8, 0, 0, w, h, Color(20, 16, 12, 205))
 
 	if (panel:GetTitle() != "" or panel.btnClose:IsVisible()) then
 		draw.RoundedBoxEx(8, 0, 0, w, 26, Color(255, 255, 255, 14), true, true, false, false)
@@ -61,7 +61,7 @@ function SKIN:PaintBaseFrame(panel, width, height)
 		ix.util.DrawBlur(panel, 10)
 	end
 
-	draw.RoundedBox(8, 0, 0, width, height, Color(8, 11, 10, 190))
+	draw.RoundedBox(8, 0, 0, width, height, Color(20, 16, 12, 190))
 end
 
 function SKIN:PaintPanel(panel)
@@ -69,16 +69,16 @@ function SKIN:PaintPanel(panel)
 
 	local w, h = panel:GetWide(), panel:GetTall()
 
-	draw.RoundedBox(6, 0, 0, w, h, Color(8, 11, 10, 165))
+	draw.RoundedBox(6, 0, 0, w, h, Color(20, 16, 12, 165))
 end
 
 function SKIN:PaintTooltipBackground(panel, width, height)
-	draw.RoundedBox(6, 0, 0, width, height, Color(8, 11, 10, 238))
+	draw.RoundedBox(6, 0, 0, width, height, Color(20, 16, 12, 238))
 	draw.RoundedBox(6, 0, 0, width, height, Color(255, 255, 255, 6))
 end
 
 function SKIN:PaintEntityInfoBackground(panel, width, height)
-	draw.RoundedBox(6, 0, 0, width, height, Color(8, 11, 10, 225))
+	draw.RoundedBox(6, 0, 0, width, height, Color(20, 16, 12, 225))
 end
 
 function SKIN:PaintTooltipMinimalBackground(panel, width, height)
@@ -97,7 +97,7 @@ function SKIN:PaintInfoBar(panel, width, height, color)
 end
 
 function SKIN:PaintInfoBarBackground(panel, width, height)
-	draw.RoundedBox(3, 0, 0, width, height, Color(255, 255, 255, 14))
+	draw.RoundedBox(3, 0, 0, width, height, Color(240, 225, 190, 16))
 
 	panel.bar:PaintManual()
 
@@ -108,7 +108,7 @@ end
 
 function SKIN:PaintInventorySlot(panel, width, height)
 	-- casillas suaves y redondeadas, sin borde
-	draw.RoundedBox(4, 1, 1, width - 2, height - 2, Color(255, 255, 255, 9))
+	draw.RoundedBox(4, 1, 1, width - 2, height - 2, Color(240, 225, 190, 11))
 end
 
 function SKIN:PaintListRow(panel, width, height)
@@ -128,19 +128,30 @@ function SKIN:DrawImportantBackground(x, y, width, height, color)
 	surface.DrawRect(x, y, 3, height)
 end
 
--- Fondo del menu del tabulador (pantalla completa): desenfoque y velo oscuro con un ligero degradado.
--- La barra de pestanas y la marca las pinta cl_menu_tab.lua.
+-- Fondo del menu del tabulador: la ilustracion del servidor, oscurecida hacia la izquierda para que el contenido
+-- se lea, con un velo calido. Si la imagen aun no se ha descargado, el mundo desenfocado.
 function SKIN:PaintMenuBackground(panel, width, height, alphaFraction)
 	alphaFraction = alphaFraction or 1
 
-	ix.util.DrawBlur(panel, alphaFraction * 10, nil, 200)
+	if (UI.DibujarFondoImagen and UI.DibujarFondoImagen(width, height)) then
+		-- velo general calido y degradado mas oscuro a la izquierda
+		surface.SetDrawColor(16, 12, 9, alphaFraction * 150)
+		surface.DrawRect(0, 0, width, height)
 
-	surface.SetDrawColor(4, 6, 6, alphaFraction * 215)
-	surface.DrawRect(0, 0, width, height)
+		surface.SetDrawColor(10, 8, 6, alphaFraction * 235)
+		surface.SetTexture(gradienteIzq)
+		surface.DrawTexturedRect(0, 0, width, height)
+	else
+		ix.util.DrawBlur(panel, alphaFraction * 10, nil, 200)
 
-	surface.SetDrawColor(UI.verde.r, UI.verde.g, UI.verde.b, alphaFraction * 60)
-	surface.SetTexture(gradienteIzq)
-	surface.DrawTexturedRect(0, 0, width, height)
+		surface.SetDrawColor(14, 11, 8, alphaFraction * 215)
+		surface.DrawRect(0, 0, width, height)
+	end
+
+	-- viñeta suave arriba y abajo
+	surface.SetDrawColor(0, 0, 0, alphaFraction * 110)
+	surface.SetTexture(gradienteAbajo)
+	surface.DrawTexturedRect(0, 0, width, height * 0.12)
 end
 
 -- Cabeceras de categoria (ajustes, listas...).
