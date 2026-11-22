@@ -12,8 +12,7 @@ Tema visual de Attack on Titan para Helix, replicando el metodo del servidor de 
 - **Pantalla de carga**: `web/loading/index.html` (HTML autonomo, sin recursos externos). Es lo que carga `sv_loadingurl`.
 
 ## Pantalla de carga (despliegue)
-GMod solo acepta una URL **https**. Opciones: GitHub Pages del repo (carpeta `web/loading`) o Netlify. Cuando este alojada:
-`sv_loadingurl "https://<url>/"` en `cfg/server.cfg` y reiniciar. Probar localmente abriendo el HTML en el navegador.
+GMod solo acepta una URL **https**. Se publica con GitHub Pages mediante el workflow `.github/workflows/pages.yml` (origen "GitHub Actions"), que despliega `web/loading` cada vez que cambia: **https://j0as112.github.io/snkrp/**. En `cfg/server.cfg` (fuera de git): `sv_loadingurl "https://j0as112.github.io/snkrp/"`; hace falta reiniciar. El logo va incrustado en el HTML (`logo.jpg` es la copia original).
 
 ## Gotchas
 - **Sin probar en juego** al escribirlo (22/11/2026): se valido la sintaxis y el HTML en navegador. Si algun panel se ve raro, el primer sospechoso es una firma de funcion de skin distinta a la de Helix (`gamemodes/helix/gamemode/core/cl_skin.lua`).
