@@ -5,7 +5,7 @@
 AOT = AOT or {}
 
 local CVARS = {
-	aotGasConsumo = {"aot_gas_consumo", 1, "Multiplicador del consumo de gas del 3DMG."},
+	aotGasConsumo = {"aot_gas_consumo", 0.3, "Multiplicador del consumo de gas del 3DMG."},
 	aotRangoGancho = {"aot_rango_gancho", 2600, "Alcance máximo de los ganchos (52 ≈ 1 metro)."},
 	aotFuerzaGancho = {"aot_fuerza_gancho", 2300, "Fuerza con la que tiran los ganchos."},
 	aotHojasRecambio = {"aot_hojas_recambio", 4, "Pares de hojas de recambio en las vainas."},

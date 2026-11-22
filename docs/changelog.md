@@ -1,6 +1,8 @@
 # Changelog
 
 ## 22/11/2026
+- Equipo de maniobras (3DMG):
+  - El gas dura mucho mas: ahora se gasta bastante menos al recoger el cable y al propulsarse.
 - Modelos:
   - Cada cuerpo (civiles, cadetes, exploracion, guarnicion y policia) usa ahora sus propios modelos de uniforme.
   - Arreglados los modelos que no se veian.

@@ -10,7 +10,7 @@ PLUGIN.description = "Configuración de Helix e items (gas y hojas) para el addo
 
 local CAT = "Attack on Titan"
 
-ix.config.Add("aotGasConsumo", 1, "Multiplicador del consumo de gas del 3DMG.", nil, {data = {min = 0, max = 5, decimals = 2}, category = CAT})
+ix.config.Add("aotGasConsumo", 0.3, "Multiplicador del consumo de gas del 3DMG (1 = consumo base del addon).", nil, {data = {min = 0, max = 5, decimals = 2}, category = CAT})
 ix.config.Add("aotRangoGancho", 2600, "Alcance máximo de los ganchos (unidades; 52 ≈ 1 metro).", nil, {data = {min = 500, max = 6000}, category = CAT})
 ix.config.Add("aotFuerzaGancho", 2300, "Fuerza con la que tiran los ganchos al recoger cable.", nil, {data = {min = 500, max = 6000}, category = CAT})
 ix.config.Add("aotHojasRecambio", 4, "Pares de hojas de recambio que caben en las vainas.", nil, {data = {min = 0, max = 12}, category = CAT})
