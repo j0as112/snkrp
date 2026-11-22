@@ -5,6 +5,8 @@
   - Nuevo aspecto de Attack on Titan para los menus, fichas, barras e inventario.
   - Nueva pantalla de muerte.
   - Nueva pantalla de carga.
+  - Nuevo menu de personaje con el logo del servidor.
+  - Nuevo aspecto del menu principal.
 - Titanes:
   - Los titanes normales ya solo caminan y la animacion de caminar funciona.
   - Los titanes ya no saltan.

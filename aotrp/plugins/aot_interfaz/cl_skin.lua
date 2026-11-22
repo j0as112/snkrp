@@ -134,6 +134,80 @@ function SKIN:PaintListRow(panel, width, height)
 	surface.DrawRect(0, 0, width, height)
 end
 
+-- Fondo "importante" (pestanas seleccionadas, botones del menu): degradado con barra dorada a la izquierda.
+function SKIN:DrawImportantBackground(x, y, width, height, color)
+	color = color or UI.verde
+
+	surface.SetTexture(gradienteIzq)
+	surface.SetDrawColor(color.r, color.g, color.b, color.a or 255)
+	surface.DrawTexturedRect(x, y, width, height)
+
+	surface.SetDrawColor(UI.oro.r, UI.oro.g, UI.oro.b, math.min(color.a or 255, 230))
+	surface.DrawRect(x, y, 3, height)
+end
+
+-- Fondo del menu principal (F1).
+function SKIN:PaintMenuBackground(panel, width, height, alphaFraction)
+	alphaFraction = alphaFraction or 1
+
+	surface.SetDrawColor(UI.verdeOsc.r, UI.verdeOsc.g, UI.verdeOsc.b, alphaFraction * 240)
+	surface.SetTexture(gradienteIzq)
+	surface.DrawTexturedRect(0, 0, width, height)
+
+	surface.SetDrawColor(UI.sangre.r, UI.sangre.g, UI.sangre.b, alphaFraction * 28)
+	surface.SetTexture(gradienteAbajo)
+	surface.DrawTexturedRect(0, 0, width, height)
+
+	ix.util.DrawBlur(panel, alphaFraction * 12, nil, 200)
+end
+
+-- Cabeceras de categoria (ajustes, listas...).
+function SKIN:PaintCategoryPanel(panel, text, color)
+	text = text or ""
+
+	surface.SetFont(self.fontCategoryBlur)
+
+	local textHeight = select(2, surface.GetTextSize(text)) + 6
+	local width, height = panel:GetSize()
+
+	surface.SetDrawColor(UI.verdeOsc.r, UI.verdeOsc.g, UI.verdeOsc.b, 150)
+	surface.DrawRect(0, textHeight, width, height - textHeight)
+
+	self:DrawImportantBackground(0, 0, width, textHeight, UI.verde)
+
+	surface.SetFont(self.fontCategory)
+	surface.SetTextColor(UI.pergamino)
+	surface.SetTextPos(10, 4)
+	surface.DrawText(text)
+
+	surface.SetDrawColor(UI.cuero.r, UI.cuero.g, UI.cuero.b, 200)
+	surface.DrawOutlinedRect(0, 0, width, height)
+
+	return 1, textHeight, 1, 1
+end
+
+-- Botones normales de derma.
+function SKIN:PaintButton(panel)
+	if (!panel.m_bBackground) then return end
+
+	local w, h = panel:GetWide(), panel:GetTall()
+	local alpha = 120
+
+	if (panel:GetDisabled()) then
+		alpha = 40
+	elseif (panel.Depressed) then
+		alpha = 230
+	elseif (panel.Hovered) then
+		alpha = 190
+	end
+
+	surface.SetDrawColor(UI.verde.r, UI.verde.g, UI.verde.b, alpha)
+	surface.DrawRect(0, 0, w, h)
+
+	surface.SetDrawColor(UI.oro.r, UI.oro.g, UI.oro.b, panel.Hovered and 200 or 80)
+	surface.DrawOutlinedRect(0, 0, w, h)
+end
+
 -- Pantallas de personaje (fondo propio; el contenido lo pinta Helix encima).
 function SKIN:PaintCharacterLoadBackground(panel, width, height)
 	surface.SetDrawColor(UI.verdeOsc.r, UI.verdeOsc.g, UI.verdeOsc.b, 235)
