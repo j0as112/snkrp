@@ -119,6 +119,42 @@ local PAGINA = [[
 </html>
 ]]
 
+-- Tipografia del menu: sans fina y limpia, con espaciado entre letras (estilo minimalista moderno).
+surface.CreateFont("aotMenuTitulo", {font = "Roboto", size = ScreenScale(34), weight = 200, extended = true})
+surface.CreateFont("aotMenuBoton", {font = "Roboto", size = ScreenScale(10.5), weight = 300, extended = true})
+surface.CreateFont("aotMenuPequeno", {font = "Roboto", size = ScreenScale(5.2), weight = 400, extended = true})
+
+-- Dibuja texto letra a letra con espaciado. alinear: 0 izquierda, 1 centro, 2 derecha. Devuelve el ancho.
+local function TextoEspaciado(texto, fuente, x, y, color, espacio, alinear)
+	surface.SetFont(fuente)
+
+	local letras, ancho = {}, 0
+
+	for _, codigo in utf8.codes(texto) do
+		local c = utf8.char(codigo)
+		local w = surface.GetTextSize(c)
+
+		letras[#letras + 1] = {c = c, w = w}
+		ancho = ancho + w + espacio
+	end
+
+	ancho = ancho - espacio
+
+	local cursor = x
+
+	if (alinear == 1) then cursor = x - ancho / 2 elseif (alinear == 2) then cursor = x - ancho end
+
+	surface.SetTextColor(color)
+
+	for _, l in ipairs(letras) do
+		surface.SetTextPos(cursor, y)
+		surface.DrawText(l.c)
+		cursor = cursor + l.w + espacio
+	end
+
+	return ancho
+end
+
 -- Por defecto se usa el menu dibujado en Lua (fiable); "aot_menu_html 1" prueba la pagina HTML.
 local CVAR_HTML = CreateClientConVar("aot_menu_html", "0", true, false)
 
@@ -185,7 +221,7 @@ function PANEL:Refrescar()
 	local texto = ix.config.Get("communityText", "@community")
 
 	if (url != "" and texto != "") then
-		comunidad = (texto:sub(1, 1) == "@") and L(texto:sub(2)) or texto
+		comunidad = (texto == "@community") and "Comunidad" or ((texto:sub(1, 1) == "@") and L(texto:sub(2)) or texto)
 	end
 
 	self.html:RunJavascript(string.format("setCargar(%s);setSalir('%s');setComunidad('%s');",
@@ -300,7 +336,7 @@ function PANEL:Botones()
 	local texto = ix.config.Get("communityText", "@community")
 
 	if (url != "" and texto != "") then
-		lista[#lista + 1] = {id = "community", texto = ((texto:sub(1, 1) == "@") and L(texto:sub(2)) or texto):utf8upper()}
+		lista[#lista + 1] = {id = "community", texto = (texto == "@community") and "COMUNIDAD" or ((texto:sub(1, 1) == "@") and L(texto:sub(2)) or texto):utf8upper()}
 	end
 
 	lista[#lista + 1] = {id = "exit", texto = self.bUsingCharacter and "VOLVER AL JUEGO" or "ABANDONAR", peligro = true}
@@ -316,74 +352,93 @@ function PANEL:Paint(ancho, alto)
 		UI.FondoEstudio(ancho, alto)
 	end
 
-	-- El panel ocupa toda la franja negra de la izquierda (de arriba abajo) y se funde con la imagen.
-	local pw = ancho * 0.40
-	local solido = pw * 0.82
+	-- Degradado suave desde la izquierda (sin panel duro): negro casi solido y se funde con la imagen.
+	local solido = ancho * 0.16
+	local fin = ancho * 0.46
 
-	surface.SetDrawColor(6, 9, 8, 245)
+	surface.SetDrawColor(4, 6, 6, 238)
 	surface.DrawRect(0, 0, solido, alto)
-
-	surface.SetDrawColor(6, 9, 8, 245)
 	surface.SetTexture(surface.GetTextureID("vgui/gradient-l"))
-	surface.DrawTexturedRect(solido, 0, pw - solido, alto)
+	surface.DrawTexturedRect(solido, 0, fin - solido, alto)
 
-	-- filete dorado vertical en el borde de la franja
-	surface.SetDrawColor(UI.oro.r, UI.oro.g, UI.oro.b, 110)
-	surface.DrawRect(solido - 2, alto * 0.08, 2, alto * 0.84)
-
-	local cx = solido / 2
+	local x = ancho * 0.075
 	local lista = self:Botones()
-	local bh, gap = ScreenScale(19), ScreenScale(5)
-	local bw = solido * 0.78
-	local ls = ScreenScale(58)
+	local dt = FrameTime()
+	self.anim = self.anim or {}
 
-	-- bloque centrado en vertical: logo, titulo, lema, filete y botones
-	local altoBloque = ls + ScreenScale(46) + ScreenScale(22) + #lista * (bh + gap)
+	local filas = #lista
+	local ls = ScreenScale(24)
+	local fila = ScreenScale(20)
+	local altoBloque = ls + ScreenScale(70) + filas * fila
 	local y = (alto - altoBloque) / 2
 
+	-- logo pequeno + marca
 	local logo = UI.Logo()
 
 	if (logo) then
 		surface.SetDrawColor(255, 255, 255, 255)
 		surface.SetMaterial(logo)
-		surface.DrawTexturedRect(cx - ls / 2, y, ls, ls)
-		surface.SetDrawColor(UI.oro.r, UI.oro.g, UI.oro.b, 200)
-		surface.DrawOutlinedRect(cx - ls / 2, y, ls, ls, 2)
+		surface.DrawTexturedRect(x, y, ls, ls)
 	end
 
-	y = y + ls + ScreenScale(16)
-	draw.SimpleText("SNK RP", "aotTitulo", cx, y, UI.pergamino, TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
+	surface.SetDrawColor(255, 255, 255, 35)
+	surface.DrawOutlinedRect(x, y, ls, ls)
 
-	y = y + ScreenScale(20)
-	draw.SimpleText("Shinzou wo Sasageyo", "aotSubtitulo", cx, y, UI.acero, TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
+	y = y + ls + ScreenScale(14)
+	TextoEspaciado("SNK RP", "aotMenuTitulo", x - ScreenScale(1), y, Color(240, 240, 238), ScreenScale(4), 0)
+
+	y = y + ScreenScale(36)
+	TextoEspaciado("ATTACK ON TITAN ROLEPLAY", "aotMenuPequeno", x, y, Color(150, 156, 160), ScreenScale(1.6), 0)
+
+	y = y + ScreenScale(12)
+	surface.SetDrawColor(UI.oro.r, UI.oro.g, UI.oro.b, 220)
+	surface.DrawRect(x, y, ScreenScale(20), 2)
 
 	y = y + ScreenScale(16)
-	surface.SetDrawColor(UI.oro.r, UI.oro.g, UI.oro.b, 170)
-	surface.DrawRect(cx - bw / 2, y, bw, 2)
 
-	y = y + ScreenScale(14)
-
+	-- botones: solo texto; al pasar el raton se dibuja una linea y se desplaza ligeramente
 	local mx, my = self:CursorPos()
+	local anchoBoton = ancho * 0.28
 	self.rectas = {}
 
 	for i, b in ipairs(lista) do
-		local bx, by = cx - bw / 2, y + (i - 1) * (bh + gap)
-		local encima = !b.apagado and mx >= bx and mx <= bx + bw and my >= by and my <= by + bh
+		local by = y + (i - 1) * fila
+		local encima = !b.apagado and mx >= x - ScreenScale(8) and mx <= x + anchoBoton and my >= by and my <= by + fila
 
-		surface.SetDrawColor(b.peligro and 120 or UI.verde.r, b.peligro and 25 or UI.verde.g, b.peligro and 25 or UI.verde.b, encima and 235 or 125)
-		surface.DrawRect(bx, by, bw, bh)
+		self.anim[b.id] = Lerp(math.min(dt * 12, 1), self.anim[b.id] or 0, encima and 1 or 0)
 
-		if (encima) then
-			surface.SetDrawColor(UI.oro.r, UI.oro.g, UI.oro.b, 255)
-			surface.DrawRect(bx, by, 5, bh)
+		local f = self.anim[b.id]
+
+		if (encima and !b.sono) then
+			b.sono = true
+			surface.PlaySound("helix/ui/rollover.wav")
+		elseif (!encima) then
+			b.sono = false
 		end
 
-		draw.SimpleText(b.texto, "ixMenuButtonFont", bx + ScreenScale(12) + (encima and 8 or 0), by + bh / 2, ColorAlpha(encima and color_white or UI.pergamino, b.apagado and 90 or 255), TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
+		-- velo muy sutil y linea inferior que crece
+		if (f > 0.01) then
+			surface.SetDrawColor(255, 255, 255, 9 * f)
+			surface.DrawRect(x - ScreenScale(8), by, anchoBoton + ScreenScale(8), fila)
 
-		self.rectas[#self.rectas + 1] = {x = bx, y = by, w = bw, h = bh, id = b.id, apagado = b.apagado}
+			surface.SetDrawColor(b.peligro and 216 or UI.oro.r, b.peligro and 80 or UI.oro.g, b.peligro and 80 or UI.oro.b, 230 * f)
+			surface.DrawRect(x - ScreenScale(8), by + fila - 2, (anchoBoton + ScreenScale(8)) * f, 2)
+		end
+
+		local alfa = b.apagado and 70 or (150 + 105 * f)
+		local color = b.peligro and Color(Lerp(f, 200, 235), Lerp(f, 200, 95), Lerp(f, 200, 95), alfa) or Color(240, 240, 238, alfa)
+
+		TextoEspaciado(string.format("%02d", i), "aotMenuPequeno", x, by + fila / 2 - ScreenScale(2.6), Color(120, 126, 130, b.apagado and 70 or 200), ScreenScale(1), 0)
+		TextoEspaciado(b.texto, "aotMenuBoton", x + ScreenScale(18) + f * ScreenScale(5), by + fila / 2 - ScreenScale(5.6), color, ScreenScale(2.2), 0)
+
+		if (f > 0.05) then
+			TextoEspaciado(">", "aotMenuBoton", x + anchoBoton - ScreenScale(8) - (1 - f) * ScreenScale(6), by + fila / 2 - ScreenScale(5.6), ColorAlpha(color, 255 * f), 0, 2)
+		end
+
+		self.rectas[#self.rectas + 1] = {x = x - ScreenScale(8), y = by, w = anchoBoton + ScreenScale(8), h = fila, id = b.id, apagado = b.apagado}
 	end
 
-	draw.SimpleText("LOS MUROS - MARIA - ROSE - SINA", "ixMenuMiniFont", cx, alto - ScreenScale(14), ColorAlpha(UI.acero, 130), TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
+	TextoEspaciado("LOS MUROS  /  MARIA  /  ROSE  /  SINA", "aotMenuPequeno", x, alto - ScreenScale(14), Color(120, 126, 130, 170), ScreenScale(1.4), 0)
 end
 
 function PANEL:OnMousePressed(codigo)
