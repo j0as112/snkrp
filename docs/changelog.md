@@ -1,6 +1,8 @@
 # Changelog
 
 ## 22/11/2026
+- Mapa:
+  - Nuevo mapa principal: Shiganshina. Se descarga solo al entrar al servidor.
 - Equipo de maniobras (3DMG):
   - El gas dura mucho mas: ahora se gasta bastante menos al recoger el cable y al propulsarse.
   - El equipo se ve ahora en el personaje: la cintura con el gas y las vainas siempre que lo lleves puesto, y las espadas en las manos cuando lo usas.

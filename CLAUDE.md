@@ -23,7 +23,7 @@ No hay build ni tests automaticos: se valida **en el juego**.
 
 ## Servidor de pruebas — REGLA DE ORO
 
-- **Todo lo de SNK se prueba en el servidor de pruebas del usuario** (el que arranca desde su panel, puerto 27030, mapa `gm_construct`/`rp_noah_snk`). 
+- **Todo lo de SNK se prueba en el servidor de pruebas del usuario** (el que arranca desde su panel, puerto 27030, mapa por defecto `rp_shiganshina_tdv1`; Workshop 2795519670). 
 - **Nunca abras servidores extra** (ni `srcds` en otro puerto, ni segundas instancias): se mezclan logs y se lia todo. Si no hay servidor arrancado, pidele al usuario que lo arranque.
 - Nunca uses rcon contra el servidor ni toques sus procesos. Los logs se leen de `D:\gmodserver\gmod\garrysmod\logs\panel_consola.log`.
 - Para recargar Lua de entidades/gamemode hace falta cambiar de mapa (`changelevel`) o reiniciar; pideselo al usuario.

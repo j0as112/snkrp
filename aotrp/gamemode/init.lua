@@ -12,6 +12,9 @@ local WORKSHOP = {
 	"3844162594", -- SNK Modelos2
 	"3844163136", -- SNK Modelos3
 
+	-- Mapa por defecto: los jugadores lo descargan de la Workshop al entrar
+	"2795519670", -- rp_shiganshina_td - Shingeki No Kyojin Map (rp_shiganshina_tdv1)
+
 	-- Animaciones y combate (wOS / lightsabers)
 	"757604550",  -- [wOS] Animation Extension - Base (Full Version)
 	"2646756503", -- [wOS] Animation Extension - Base (Code Only)
