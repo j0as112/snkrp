@@ -843,8 +843,32 @@ if (CLIENT) then
 		end
 	end)
 
+	local llamadasHook = 0
+
+	-- Diagnostico automatico: unos segundos despues de recibir el arma, escribe el estado en la consola.
+	local ultimoInforme = 0
+
+	hook.Add("Think", "AOT_Equipo3DMG_Informe", function()
+		local yo = LocalPlayer()
+		if (!IsValid(yo)) then return end
+
+		local arma = yo:GetWeapon("aot_odm")
+
+		if (IsValid(arma) and arma != ultimoInforme) then
+			ultimoInforme = arma
+
+			timer.Simple(4, function()
+				MsgN("[aot_equipo] --- informe automatico ---")
+				MsgN("[aot_equipo] llamadas de PostPlayerDraw para ti hasta ahora: ", llamadasHook)
+				RunConsoleCommand("aot_equipo_info")
+			end)
+		end
+	end)
+
 	hook.Add("PostPlayerDraw", "AOT_Equipo3DMG", function(jugador)
 		local arma = jugador:GetWeapon("aot_odm")
+
+		if (jugador == LocalPlayer()) then llamadasHook = llamadasHook + 1 end
 
 		if (IsValid(arma) and arma.DibujarEquipo) then
 			arma:DibujarEquipo(jugador)

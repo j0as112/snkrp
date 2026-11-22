@@ -164,7 +164,7 @@ if (SERVER) then
 		self.loco:SetJumpHeight(paso)
 
 		self.AOT_VidaBrazoMax = 50 + 6 * escala
-		self.AOT_VidaTendonMax = 40 + 5 * escala
+		self.AOT_VidaTendonMax = 22 + 2.5 * escala
 		self.AOT_NucaMax = 35 + 4 * escala
 
 		self.AOT_VidaBrazo = {self.AOT_VidaBrazoMax, self.AOT_VidaBrazoMax}
@@ -516,6 +516,9 @@ if (SERVER) then
 	end
 
 	function ENT:EnAlcance(objetivo)
+		-- Sin brazos no puede atrapar a nadie: solo persigue y pisa hasta que le vuelvan a crecer.
+		if (#self:ManosLibres() == 0) then return false end
+
 		local escala = self:GetEscala()
 		local p = objetivo:WorldSpaceCenter()
 		local pos = self:GetPos()
@@ -526,12 +529,6 @@ if (SERVER) then
 		if (plano > 0.01) then dir:Normalize() end
 
 		local delante = plano < 6 * escala or dir:Dot(self:GetForward()) > 0.3
-
-		-- Sin brazos solo puede morder: se inclina hacia lo que tiene a los pies o a la altura de la boca.
-		if (#self:ManosLibres() == 0) then
-			if (p:Distance(AOT.PosBoca(self)) < 16 * escala) then return true end
-			return delante and plano < 16 * escala and p.z - pos.z < 25 * escala
-		end
 
 		-- Alcance a ras de suelo: la mano baja a por quien esté delante.
 		if (delante and plano < 26 * escala and p.z - pos.z < 40 * escala) then return true end
@@ -632,22 +629,24 @@ if (SERVER) then
 		while (CurTime() - inicio < duracion) do
 			if (self:GetMuerto() or self:GetDerribado()) then break end
 
+			-- Si le cortan los brazos en pleno ataque, se cancela: sin manos no agarra.
+			manos = self:ManosLibres()
+			if (#manos == 0) then break end
+
 			if (IsValid(objetivo)) then self.loco:FaceTowards(objetivo:GetPos()) end
 
 			local ciclo = (CurTime() - inicio) / duracion
 
 			if (!hecho and ciclo > 0.22 and ciclo < 0.65) then
-				-- Cualquiera que esté al alcance de la mano (o de la boca, si no tiene brazos).
-				local lados = #manos > 0 and manos or {0}
-
-				for _, lado in ipairs(lados) do
+				-- Cualquiera que esté al alcance de alguna de sus manos libres.
+				for _, lado in ipairs(manos) do
 					local mano = self:PosMano(lado)
 
 					for _, p in ipairs(player.GetAll()) do
-						if (self:ObjetivoValido(p) and p:WorldSpaceCenter():Distance(mano) < (lado == 0 and 14 or 11) * escala) then
+						if (self:ObjetivoValido(p) and p:WorldSpaceCenter():Distance(mano) < 11 * escala) then
 							hecho = true
 
-							if (lado != 0 and (golpear or p:GetVelocity():Length() > 700)) then
+							if (golpear or p:GetVelocity():Length() > 700) then
 								self:Manotazo(p, mano)
 							else
 								self:Agarrar(p, lado)
@@ -665,10 +664,10 @@ if (SERVER) then
 					and objetivo:GetVelocity():Length() < 500) then
 					hecho = true
 
-					if (golpear and #manos > 0) then
+					if (golpear) then
 						self:Manotazo(objetivo, self:PosMano(manos[1]))
 					else
-						self:Agarrar(objetivo, manos[1] or 0)
+						self:Agarrar(objetivo, manos[1])
 					end
 				end
 			end
@@ -975,8 +974,11 @@ if (SERVER) then
 		util.ScreenShake(self:GetPos(), 8, 5, 1, 300 * escala)
 		self:EmitSound("physics/concrete/boulder_impact_hard" .. math.random(1, 4) .. ".wav", 110, 50)
 
-		-- En el suelo hasta que regenere al menos un tendón.
-		while (AOT.ParteCortada(self, P.TENDON_I) and AOT.ParteCortada(self, P.TENDON_D)) do
+		-- En el suelo hasta que regenere al menos un tendón y, como mínimo, unos segundos (si no, un tendón
+		-- que estaba a punto de regenerarse lo levantaba casi al instante y parecía que no caía).
+		local caidoDesde = CurTime()
+
+		while ((AOT.ParteCortada(self, P.TENDON_I) and AOT.ParteCortada(self, P.TENDON_D)) or CurTime() - caidoDesde < 8) do
 			if (self:GetMuerto()) then return end
 			if (self:GetSequence() != seq) then self:ResetSequence(seq) end
 			self:FijarCicloDerribo(CAIDA)

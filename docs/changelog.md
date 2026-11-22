@@ -30,4 +30,6 @@
   - Los titanes ya no saltan.
   - Los titanes ahora pueden agarrarte y comerte, o golpearte y lanzarte por los aires.
   - Los titanes pueden pisarte al caminar.
+  - Un titan sin brazos ya no puede atraparte.
+  - Los tendones se cortan con mas facilidad y, al caer, el titan se queda en el suelo un buen rato.
   - Arreglado un fallo que bugeaba al jugador cuando un titan lo alcanzaba.

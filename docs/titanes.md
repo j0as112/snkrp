@@ -26,3 +26,6 @@ Codigo en el repo/servidor, contenido en la Workshop (ver CLAUDE.md). La Worksho
 - **El servidor tambien necesita los modelos.** `resource.AddWorkshop` solo los manda a los clientes. Si el servidor no tiene `models/hydralis_titan*.mdl`, el titan no tiene secuencias ni huesos: se ve congelado, sin ninguna animacion, y los cortes por huesos fallan. Al iniciar sale el aviso `[SNK Titanes] El servidor no tiene los modelos de titan`.
 - Servidor de pruebas local: el contenido se monta con enlaces en `garrysmod/addons/`: `snk_contenido_titanes` → `Desktop\SNKtitanes` y `snk_contenido_armas` → `Desktop\SNKarmas`.
 - Servidor alquilado: hay que montar la coleccion de la Workshop en el servidor (`+host_workshop_collection` con su clave de API) o subir el contenido a `addons/`.
+
+## Sin brazos
+Un titan con los dos brazos cortados (o regenerandose) **no puede atacar**: `EnAlcance` devuelve false y `Atacar` se cancela si pierde los brazos a mitad. Solo persigue y pisa. Los tendones tienen menos vida (`22 + 2.5 * escala`) y un derribo dura como minimo 8 s.
