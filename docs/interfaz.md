@@ -28,6 +28,11 @@ Inventario, personaje, ajustes, ayuda... Como el de Naruto: **barra de pestanas 
 - `ix.aotUI.TextoEspaciado` (en `cl_tema.lua`) dibuja texto con espaciado entre letras.
 - **Gotchas:** la altura reservada arriba es `ALTO_BARRA + ALTO_SUB` (ScreenScale); si se anade una pestana con muchas secciones habria que revisar el ancho de la fila secundaria.
 
+## Inventario con personaje y huecos de equipo (`cl_inventario.lua`)
+Sustituye la pestana `inv` de Helix (mismo hook `CreateMenuButtons`/`ixInventory`, se carga despues del nucleo) manteniendo su **cuadricula** (`ixInventory`: arrastrar, usar, equipar, bolsas) y anadiendo a la izquierda un **escenario**: `DModelPanel` con el modelo, skin y bodygroups del personaje (se gira arrastrando) y **huecos de equipo** a los lados (`aotRanura`): ROPA, EXTRA, EQUIPO (3DMG, `class == "aot_odm"`), ARMA x2. Un hueco muestra lo equipado (`item:GetData("equip")`), un clic lo desequipa (`ixInventoryAction` `EquipUn`) y acepta objetos arrastrados del tipo adecuado (`Equip`). La clasificacion esta en `Tipo(item)`.
+- Los nombres de las pestanas de la barra se traducen en `cl_menu_tab.lua` (`TRADUCCION`).
+- **Pendiente:** accesorios (`advanced_accessories`) sobre el modelo, peso/capacidad, mochilas como hueco.
+
 ## Seleccion de personaje con escena 3D (`cl_seleccion.lua`, `sv_seleccion.lua`)
 Sustituye a `ixCharMenuLoad` de Helix siguiendo la seleccion de Naruto: los personajes de la cuenta salen de pie delante de una camara, 3 por pagina; el raton resalta, clic elige, la X del rotulo borra (con confirmacion) y las flechas pasan de pagina.
 - **Modo mundo:** la camara es un rincon real del mapa. El staff (superadmin) se coloca mirando donde quiera y usa `/SeleccionCamara [distancia] [separacion] [fov]`; se guarda **por mapa** (`ix.data` `seleccionEscena`) y `/SeleccionBorrar` la quita. El servidor mete el punto en el PVS del jugador sin personaje (`SetupPlayerVisibility`). Los huecos se calculan delante de la camara, sobre el suelo (traza hacia abajo).

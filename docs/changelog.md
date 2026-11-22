@@ -13,6 +13,7 @@
   - Nuevo aspecto de Attack on Titan para los menus, fichas, barras e inventario.
   - Nueva pantalla de muerte.
   - Nuevo menu del tabulador: pestanas arriba con texto fino y barra dorada, y el contenido a pantalla completa.
+  - Nuevo inventario: tu personaje en 3D con huecos de equipo (ropa, equipo de maniobras y armas) junto a la cuadricula de objetos.
   - Nueva pantalla de carga.
   - Nuevo menu de bienvenida al conectar, con el logo del servidor y un fondo animado.
   - Nuevo aspecto del menu principal.

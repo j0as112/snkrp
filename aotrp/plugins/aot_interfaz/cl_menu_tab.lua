@@ -40,6 +40,16 @@ if (SELECCION) then
 	end
 end
 
+-- Nombres de las pestanas en espanol (Helix las traduce con el idioma del cliente, que suele ser ingles).
+local TRADUCCION = {
+	inv = "INVENTARIO", you = "PERSONAJE", settings = "AJUSTES", help = "AYUDA", config = "CONFIGURACION",
+	plugins = "PLUGINS", scoreboard = "JUGADORES", classes = "CLASES", business = "TIENDA",
+}
+
+local function NombrePestana(origen)
+	return TRADUCCION[string.lower(origen.name or "")] or origen:GetText()
+end
+
 -- ===== Boton de texto de la barra =====
 local function AnchoTexto(texto, fuente, espacio)
 	surface.SetFont(fuente)
@@ -169,7 +179,7 @@ if (MENU and !MENU.aotBarraSuperior) then
 
 		for _, origen in ipairs(self.tabs.buttons) do
 			if (IsValid(origen)) then
-				local btn = BotonBarra(barra, origen:GetText(), "aotMenuBoton", ScreenScale(2), ScreenScale(10), ALTO_BARRA, origen, function()
+				local btn = BotonBarra(barra, NombrePestana(origen), "aotMenuBoton", ScreenScale(2), ScreenScale(10), ALTO_BARRA, origen, function()
 					origen:OnMousePressed(MOUSE_LEFT)
 				end)
 
