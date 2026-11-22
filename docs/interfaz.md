@@ -20,6 +20,10 @@ Version HTML: lo primero que se ve al conectar (Nuevo soldado / Continuar / Comu
 - El logo se carga de `https://j0as112.github.io/snkrp/logo.jpg`; si falla, solo se ve el texto.
 - `cl_personaje.lua` queda para el fondo del contenedor y el estilo de `ixMenuButton`.
 
+## Menu del tabulador (`cl_menu_tab.lua` + skin)
+Inventario, personaje, ajustes... Se mantiene la estructura de Helix (`ixMenu`: pestanas a la izquierda, paneles a la derecha) para no romper el inventario, y solo cambia el aspecto, con el mismo lenguaje que el menu de bienvenida: fuente fina (`aotMenuBoton`) en todos los botones de menu, pestanas de texto con un velo sutil y barra dorada a la izquierda, fondo con degradado oscuro desde la izquierda (`PaintMenuBackground` del skin) y la marca "SNK RP" arriba. Naruto sustituye el panel entero por un DHTML con pestanas arriba y pergamino; aqui se descarto por riesgo (el inventario es critico) y porque los paneles internos de Helix estan pensados para su layout.
+- `ix.aotUI.TextoEspaciado` (en `cl_tema.lua`) dibuja texto con espaciado entre letras; lo usan el menu de bienvenida y el del tabulador.
+
 ## Seleccion de personaje con escena 3D (`cl_seleccion.lua`, `sv_seleccion.lua`)
 Sustituye a `ixCharMenuLoad` de Helix siguiendo la seleccion de Naruto: los personajes de la cuenta salen de pie delante de una camara, 3 por pagina; el raton resalta, clic elige, la X del rotulo borra (con confirmacion) y las flechas pasan de pagina.
 - **Modo mundo:** la camara es un rincon real del mapa. El staff (superadmin) se coloca mirando donde quiera y usa `/SeleccionCamara [distancia] [separacion] [fov]`; se guarda **por mapa** (`ix.data` `seleccionEscena`) y `/SeleccionBorrar` la quita. El servidor mete el punto en el PVS del jugador sin personaje (`SetupPlayerVisibility`). Los huecos se calculan delante de la camara, sobre el suelo (traza hacia abajo).

@@ -124,36 +124,7 @@ surface.CreateFont("aotMenuTitulo", {font = "Roboto", size = ScreenScale(34), we
 surface.CreateFont("aotMenuBoton", {font = "Roboto", size = ScreenScale(10.5), weight = 300, extended = true})
 surface.CreateFont("aotMenuPequeno", {font = "Roboto", size = ScreenScale(5.2), weight = 400, extended = true})
 
--- Dibuja texto letra a letra con espaciado. alinear: 0 izquierda, 1 centro, 2 derecha. Devuelve el ancho.
-local function TextoEspaciado(texto, fuente, x, y, color, espacio, alinear)
-	surface.SetFont(fuente)
-
-	local letras, ancho = {}, 0
-
-	for _, codigo in utf8.codes(texto) do
-		local c = utf8.char(codigo)
-		local w = surface.GetTextSize(c)
-
-		letras[#letras + 1] = {c = c, w = w}
-		ancho = ancho + w + espacio
-	end
-
-	ancho = ancho - espacio
-
-	local cursor = x
-
-	if (alinear == 1) then cursor = x - ancho / 2 elseif (alinear == 2) then cursor = x - ancho end
-
-	surface.SetTextColor(color)
-
-	for _, l in ipairs(letras) do
-		surface.SetTextPos(cursor, y)
-		surface.DrawText(l.c)
-		cursor = cursor + l.w + espacio
-	end
-
-	return ancho
-end
+local TextoEspaciado = UI.TextoEspaciado
 
 -- Por defecto se usa el menu dibujado en Lua (fiable); "aot_menu_html 1" prueba la pagina HTML.
 local CVAR_HTML = CreateClientConVar("aot_menu_html", "0", true, false)

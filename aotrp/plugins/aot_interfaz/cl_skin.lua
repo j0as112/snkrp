@@ -146,19 +146,29 @@ function SKIN:DrawImportantBackground(x, y, width, height, color)
 	surface.DrawRect(x, y, 3, height)
 end
 
--- Fondo del menu principal (F1).
+-- Fondo del menu del tabulador: degradado oscuro desde la izquierda (como el menu de bienvenida), desenfoque
+-- y la marca arriba a la izquierda.
 function SKIN:PaintMenuBackground(panel, width, height, alphaFraction)
 	alphaFraction = alphaFraction or 1
 
-	surface.SetDrawColor(UI.verdeOsc.r, UI.verdeOsc.g, UI.verdeOsc.b, alphaFraction * 240)
+	ix.util.DrawBlur(panel, alphaFraction * 10, nil, 200)
+
+	local solido = width * 0.22
+
+	surface.SetDrawColor(4, 6, 6, alphaFraction * 232)
+	surface.DrawRect(0, 0, solido, height)
 	surface.SetTexture(gradienteIzq)
-	surface.DrawTexturedRect(0, 0, width, height)
+	surface.DrawTexturedRect(solido, 0, width * 0.78, height)
 
-	surface.SetDrawColor(UI.sangre.r, UI.sangre.g, UI.sangre.b, alphaFraction * 28)
-	surface.SetTexture(gradienteAbajo)
-	surface.DrawTexturedRect(0, 0, width, height)
+	-- marca
+	if (panel.GetPadding and UI.TextoEspaciado) then
+		local pad = panel:GetPadding()
 
-	ix.util.DrawBlur(panel, alphaFraction * 12, nil, 200)
+		UI.TextoEspaciado("SNK RP", "aotMenuBoton", pad, pad * 0.55, Color(240, 240, 238, alphaFraction * 255), ScreenScale(2.2), 0)
+
+		surface.SetDrawColor(UI.oro.r, UI.oro.g, UI.oro.b, alphaFraction * 220)
+		surface.DrawRect(pad, pad * 0.55 + ScreenScale(13), ScreenScale(16), 2)
+	end
 end
 
 -- Cabeceras de categoria (ajustes, listas...).

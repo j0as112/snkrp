@@ -12,6 +12,7 @@
 - Interfaz:
   - Nuevo aspecto de Attack on Titan para los menus, fichas, barras e inventario.
   - Nueva pantalla de muerte.
+  - Nuevo aspecto del menu del tabulador: pestanas de texto fino con barra dorada y la marca del servidor.
   - Nueva pantalla de carga.
   - Nuevo menu de bienvenida al conectar, con el logo del servidor y un fondo animado.
   - Nuevo aspecto del menu principal.
