@@ -20,6 +20,16 @@ local ESTUDIO = {
 	sep = 72
 }
 
+-- util.IsInWorld solo existe en el servidor: en el cliente se comprueba que el punto no esta dentro de un
+-- solido y que hay suelo debajo (una camara en el vacio daba una pantalla negra).
+local function CamaraValida(pos)
+	if (!pos or bit.band(util.PointContents(pos), CONTENTS_SOLID) != 0) then return false end
+
+	local tr = util.TraceLine({start = pos, endpos = pos - Vector(0, 0, 3000), mask = MASK_SOLID_BRUSHONLY})
+
+	return tr.Hit and !tr.StartSolid
+end
+
 -- ===== Escena real del mapa (llega del servidor) =====
 net.Receive("aot_SeleccionEscena", function()
 	local t = net.ReadTable()
@@ -246,7 +256,7 @@ end
 
 function PANEL:ActualizarModo()
 	local esc = ix.aotUI.escena
-	local nuevo = esc != nil and !ix.aotUI.forzarEstudio and util.IsInWorld(esc.cam.pos) and self:IsVisible()
+	local nuevo = esc != nil and !ix.aotUI.forzarEstudio and CamaraValida(esc.cam.pos) and self:IsVisible()
 	local cambio = (nuevo != (self.modoMundo or false))
 
 	self.modoMundo = nuevo
