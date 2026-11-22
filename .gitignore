@@ -35,3 +35,6 @@ _aotrp_frankenstein/
 # Opcional: se vuelve a incluir lo necesario del addon de titanes
 !addons/SNKtitanes/addon.json
 !addons/SNKarmas/addon.json
+
+# La pantalla de carga si lleva su logo
+!web/loading/logo.jpg
