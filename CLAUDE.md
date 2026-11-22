@@ -19,7 +19,7 @@ No hay build ni tests automaticos: se valida **en el juego**.
 - El **codigo** (`.lua`) de `SNKarmas` y `SNKtitanes` vive **solo en este repo** (`addons/SNKarmas`, `addons/SNKtitanes`). Las carpetas `SNKarmas` y `SNKtitanes` de `D:\gmodserver\gmod\garrysmod\addons\` son enlaces (junction) a ellas. Se edita ahi.
 - La **Workshop** (coleccion "SNK Roleplay (servidor)", items 3844168113 Armas, 3844165113 Titanes, 3844163136/3844162594/3844162132 Modelos1-3) lleva **solo contenido**: modelos, materiales, sonidos, particulas. **Nunca `lua/`**: si no, se pisa con el codigo del servidor y se mezclan versiones.
 - Los clientes reciben el contenido por `resource.AddWorkshop` (en `aotrp/gamemode/init.lua`) y el codigo desde el servidor.
-- Las carpetas listas para publicar (sin `lua/`) estan en `C:\Users\r380\Desktop\Workshop_solo_contenido\`; se suben con gmpublisher solo cuando cambian los assets.
+- gmpublisher publica desde `C:\Users\r380\Desktop\SNKarmas` y `C:\Users\r380\Desktop\SNKtitanes`: esas carpetas contienen **solo contenido** (sin `lua/`) y se actualizan con el boton de gmpublisher solo cuando cambian los assets. Respaldo del codigo antiguo en `C:\Users\r380\Desktop\_respaldo_lua_snk` (ya esta en el repo; se puede borrar).
 
 ## Servidor de pruebas — REGLA DE ORO
 
