@@ -11,6 +11,7 @@
   - Nuevo menu de personaje con el logo del servidor.
   - Nuevo aspecto del menu principal.
 - Titanes:
+  - Arreglado que los titanes se quedaran congelados sin ninguna animacion (andar, agarrar, comer, caer y morir).
   - Los titanes normales ya solo caminan y la animacion de caminar funciona.
   - Los titanes ya no saltan.
   - Los titanes ahora pueden agarrarte y comerte, o golpearte y lanzarte por los aires.

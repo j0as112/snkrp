@@ -5,6 +5,13 @@ hook.Add("Initialize", "AOT_ComprobarNucleo", function()
 	if (!AOT or !AOT.PARTE) then
 		ErrorNoHalt("[SNK Titanes] Falta el addon 'SNK Armas' (SNKarmas). Los titanes no funcionarán sin él.\n")
 	end
+
+	-- El servidor también necesita los modelos (no solo los clientes): sin ellos no hay secuencias
+	-- ni huesos, y los titanes se quedan congelados y los cortes fallan.
+	if (SERVER and !util.IsValidModel("models/hydralis_titan1.mdl")) then
+		ErrorNoHalt("[SNK Titanes] El servidor no tiene los modelos de titán (contenido de la Workshop 'SNK Titanes'). "
+			.. "Sin ellos no hay animaciones: monta el contenido en el servidor (ver docs/titanes.md).\n")
+	end
 end)
 
 -- Compatibilidad: los nombres antiguos (npc_titan, npc_titan_deviant_sprinter) usan los titanes nuevos.
