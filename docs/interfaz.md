@@ -48,3 +48,6 @@ GMod solo acepta una URL **https**. Se publica con GitHub Pages mediante el work
 - Solo se pinta; no hay logica. Los botones del menu y el inventario HTML/derma de Helix mantienen su distribucion; lo que cambia es el estilo.
 - La fuente es `Georgia` (Windows). Si faltara en un cliente, GMod usa una por defecto.
 - Pendiente (siguiente iteracion): accesorios en la seleccion, HUD propio con retrato, inventario con diseno propio, intro de Helix personalizada.
+
+## Estilo general (moderno / minimalista)
+Para evitar el aspecto de software de los 90, el skin no usa bordes marcados ni esquinas doradas: marcos, paneles, tooltips y fichas son **rectangulos redondeados translucidos** (`draw.RoundedBox`), las casillas del inventario son cuadrados suaves sin borde y los huecos de equipo se tiñen de dorado tenue al llenarse. `ix.aotUI.Marco`/`Plancha` siguen existiendo en `cl_tema.lua` pero ya no los usa el skin.

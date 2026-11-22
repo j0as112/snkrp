@@ -82,30 +82,28 @@ function RANURA:Paint(w, h)
 
 	self.f = Lerp(math.min(FrameTime() * 12, 1), self.f, (self:IsHovered() and self.item) and 1 or 0)
 
-	surface.SetDrawColor(6, 9, 8, 200)
-	surface.DrawRect(0, 0, w, h)
+	-- casilla suave y redondeada; al llenarse se tiñe de dorado muy tenue
+	draw.RoundedBox(6, 0, 0, w, h, Color(255, 255, 255, activo and 20 or 10))
 
-	local a = activo and 200 or 70
-	surface.SetDrawColor(UI.oro.r, UI.oro.g, UI.oro.b, a * (0.5 + 0.5 * self.f))
-	surface.DrawOutlinedRect(0, 0, w, h)
+	if (activo) then
+		draw.RoundedBox(6, 0, 0, w, h, Color(UI.oro.r, UI.oro.g, UI.oro.b, 16 + 26 * self.f))
+	end
 
 	if (!activo) then
-		UI.TextoEspaciado(self.texto, "aotMenuPequeno", w / 2, h / 2 - ScreenScale(2.6), Color(130, 136, 140, 150), ScreenScale(1.2), 1)
+		UI.TextoEspaciado(self.texto, "aotMenuPequeno", w / 2, h / 2 - ScreenScale(2.6), Color(130, 136, 140, 140), ScreenScale(1.2), 1)
 	end
 
 	-- aviso al arrastrar un objeto compatible
 	local arrastrado = (dragndrop.GetDroppable() or {})[1]
 
 	if (IsValid(arrastrado) and arrastrado.itemTable and Tipo(arrastrado.itemTable) == self.tipo) then
-		surface.SetDrawColor(110, 200, 120, 60 + 40 * math.sin(CurTime() * 6))
-		surface.DrawRect(1, 1, w - 2, h - 2)
+		draw.RoundedBox(6, 0, 0, w, h, Color(110, 200, 120, 40 + 35 * math.sin(CurTime() * 6)))
 	end
 end
 
 function RANURA:PaintOver(w, h)
 	if (self.f > 0.05 and self.item) then
-		surface.SetDrawColor(216, 80, 80, 110 * self.f)
-		surface.DrawRect(0, h - 3, w, 3)
+		draw.RoundedBox(2, w * 0.2, h - 4, w * 0.6, 2, Color(216, 80, 80, 200 * self.f))
 	end
 end
 

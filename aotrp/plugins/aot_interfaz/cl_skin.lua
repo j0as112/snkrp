@@ -44,21 +44,16 @@ function SKIN:PaintFrame(panel)
 
 	local w, h = panel:GetWide(), panel:GetTall()
 
-	UI.Plancha(0, 0, w, h, 205)
+	-- panel redondeado, translucido y sin borde marcado (estilo moderno)
+	draw.RoundedBox(8, 0, 0, w, h, Color(8, 11, 10, 205))
 
 	if (panel:GetTitle() != "" or panel.btnClose:IsVisible()) then
-		surface.SetDrawColor(UI.verde.r, UI.verde.g, UI.verde.b, 235)
-		surface.DrawRect(0, 0, w, 24)
-
-		surface.SetDrawColor(UI.oro.r, UI.oro.g, UI.oro.b, 200)
-		surface.DrawRect(0, 24, w, 1)
+		draw.RoundedBoxEx(8, 0, 0, w, 26, Color(255, 255, 255, 14), true, true, false, false)
 
 		if (panel.bHighlighted) then
-			self:DrawImportantBackground(0, 0, w, 24, ColorAlpha(UI.pergamino, 22))
+			self:DrawImportantBackground(0, 0, w, 26, ColorAlpha(UI.pergamino, 22))
 		end
 	end
-
-	UI.Marco(0, 0, w, h, UI.oro, 8)
 end
 
 function SKIN:PaintBaseFrame(panel, width, height)
@@ -66,8 +61,7 @@ function SKIN:PaintBaseFrame(panel, width, height)
 		ix.util.DrawBlur(panel, 10)
 	end
 
-	UI.Plancha(0, 0, width, height, 205)
-	UI.Marco(0, 0, width, height, UI.oro, 8)
+	draw.RoundedBox(8, 0, 0, width, height, Color(8, 11, 10, 190))
 end
 
 function SKIN:PaintPanel(panel)
@@ -75,21 +69,16 @@ function SKIN:PaintPanel(panel)
 
 	local w, h = panel:GetWide(), panel:GetTall()
 
-	surface.SetDrawColor(UI.verdeOsc.r, UI.verdeOsc.g, UI.verdeOsc.b, 170)
-	surface.DrawRect(0, 0, w, h)
-
-	surface.SetDrawColor(UI.cuero.r, UI.cuero.g, UI.cuero.b, 140)
-	surface.DrawOutlinedRect(0, 0, w, h)
+	draw.RoundedBox(6, 0, 0, w, h, Color(8, 11, 10, 165))
 end
 
 function SKIN:PaintTooltipBackground(panel, width, height)
-	UI.Plancha(0, 0, width, height, 235)
-	UI.Marco(0, 0, width, height, UI.oro, 6)
+	draw.RoundedBox(6, 0, 0, width, height, Color(8, 11, 10, 238))
+	draw.RoundedBox(6, 0, 0, width, height, Color(255, 255, 255, 6))
 end
 
 function SKIN:PaintEntityInfoBackground(panel, width, height)
-	UI.Plancha(0, 0, width, height, 220)
-	UI.Marco(0, 0, width, height, UI.oro, 6)
+	draw.RoundedBox(6, 0, 0, width, height, Color(8, 11, 10, 225))
 end
 
 function SKIN:PaintTooltipMinimalBackground(panel, width, height)
@@ -108,11 +97,7 @@ function SKIN:PaintInfoBar(panel, width, height, color)
 end
 
 function SKIN:PaintInfoBarBackground(panel, width, height)
-	surface.SetDrawColor(UI.verdeOsc.r, UI.verdeOsc.g, UI.verdeOsc.b, 200)
-	surface.DrawRect(0, 0, width, height)
-
-	surface.SetDrawColor(UI.acero.r, UI.acero.g, UI.acero.b, 110)
-	surface.DrawOutlinedRect(0, 0, width, height)
+	draw.RoundedBox(3, 0, 0, width, height, Color(255, 255, 255, 14))
 
 	panel.bar:PaintManual()
 
@@ -122,11 +107,8 @@ function SKIN:PaintInfoBarBackground(panel, width, height)
 end
 
 function SKIN:PaintInventorySlot(panel, width, height)
-	surface.SetDrawColor(UI.verdeOsc.r, UI.verdeOsc.g, UI.verdeOsc.b, 150)
-	surface.DrawRect(1, 1, width - 2, height - 2)
-
-	surface.SetDrawColor(UI.cuero.r, UI.cuero.g, UI.cuero.b, 230)
-	surface.DrawOutlinedRect(1, 1, width - 2, height - 2)
+	-- casillas suaves y redondeadas, sin borde
+	draw.RoundedBox(4, 1, 1, width - 2, height - 2, Color(255, 255, 255, 9))
 end
 
 function SKIN:PaintListRow(panel, width, height)
