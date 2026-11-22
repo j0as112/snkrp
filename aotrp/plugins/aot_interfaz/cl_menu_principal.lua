@@ -409,11 +409,15 @@ function PANEL:Paint(ancho, alto)
 
 		local f = self.anim[b.id]
 
-		if (encima and !b.sono) then
-			b.sono = true
+		-- El sonido suena una sola vez al entrar el cursor (el estado va en el panel: la lista de botones
+		-- se reconstruye en cada fotograma).
+		self.sono = self.sono or {}
+
+		if (encima and !self.sono[b.id]) then
+			self.sono[b.id] = true
 			surface.PlaySound("helix/ui/rollover.wav")
 		elseif (!encima) then
-			b.sono = false
+			self.sono[b.id] = false
 		end
 
 		-- velo muy sutil y linea inferior que crece
