@@ -15,3 +15,6 @@ depende: [SNKarmas]
 - **Colision con jugadores**: si el jugador queda dentro de la caja del titan, se bugea. Los jugadores atraviesan titanes mediante el hook `ShouldCollide` (+ `SetCustomCollisionCheck`). **No cambiar el `CollisionGroup` del nextbot**: `DEBRIS_TRIGGER` y `PASSABLE_DOOR` lo hacen caer atravesando el suelo.
 - Altura de salto = altura de paso para que el navegador nunca salte.
 - No usar caracteres no ASCII en nombres de funcion.
+
+## Despliegue
+Codigo en el repo/servidor, contenido en la Workshop (ver CLAUDE.md). La Workshop no debe incluir `lua/`.
