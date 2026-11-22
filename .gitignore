@@ -1,0 +1,37 @@
+# Binarios y assets pesados: no viajan por git (viven en el Workshop / en la carpeta maestra del Escritorio)
+*.mdl
+*.vtx
+*.vvd
+*.phy
+*.ani
+*.vtf
+*.vmt
+*.png
+*.jpg
+*.wav
+*.mp3
+*.ogg
+*.bsp
+*.nav
+*.vpk
+*.gma
+*.dat
+*.rar
+*.zip
+*.bak*
+*.db
+*.sqlite
+
+# Addons de terceros (tienen su propio repo)
+addons/ulib/
+addons/ulx/
+
+# Datos de juego, credenciales y backups
+data/
+cfg/
+_desactivado_hp/backups/
+_aotrp_frankenstein/
+
+# Opcional: se vuelve a incluir lo necesario del addon de titanes
+!addons/SNKtitanes/addon.json
+!addons/SNKarmas/addon.json

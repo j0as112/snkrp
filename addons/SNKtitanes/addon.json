@@ -1,0 +1,6 @@
+{
+	"title": "SNK Titanes",
+	"type": "npc",
+	"tags": ["roleplay", "fun"],
+	"ignore": ["*.psd", "*.vcproj", "*.svn*", "*.bak", "LEEME.txt"]
+}

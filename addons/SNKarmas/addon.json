@@ -1,0 +1,6 @@
+{
+	"title": "SNK Armas - Equipo de maniobras 3DMG",
+	"type": "weapon",
+	"tags": ["roleplay", "fun"],
+	"ignore": ["*.psd", "*.vcproj", "*.svn*", "*.bak", "LEEME.txt"]
+}

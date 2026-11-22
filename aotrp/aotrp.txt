@@ -1,0 +1,8 @@
+"aotrp"
+{
+	"base"		"helix"
+	"title"		"Attack on Titan RP"
+	"author"	"j0as"
+	"category"	"rp"
+	"menusystem"	"1"
+}
